@@ -2,6 +2,8 @@
   <img src="assets/banner.png" alt="Claudikins Kernel - Plan, Execute, Verify, Ship">
 </p>
 
+[View the marketplace](https://github.com/elb-pr/claudikins-marketplace)
+
 # Claudikins Kernel
 
 A structured workflow plugin for Claude Code that enforces quality through human checkpoints, isolated agents, and verification gates.
