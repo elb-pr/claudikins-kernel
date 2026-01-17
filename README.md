@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/banner.png" alt="Claudikins Kernel - Plan, Execute, Verify, Ship" width="600">
+  <img src="assets/banner.png" alt="Claudikins Kernel - Plan, Execute, Verify, Ship">
 </p>
 
 # Claudikins Kernel
