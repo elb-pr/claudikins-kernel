@@ -1,5 +1,5 @@
 ---
-name: brain-jam-plan
+name: outline
 description: Use when running claudikins-kernel:outline, brainstorming implementation approaches, gathering requirements iteratively, structuring complex technical plans, or facing analysis paralysis with too many options — provides iterative human-in-the-loop planning with explicit checkpoints and trade-off presentation
 ---
 

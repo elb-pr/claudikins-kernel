@@ -29,7 +29,7 @@ allowed-tools:
   - TodoWrite
   - Skill
 skills:
-  - brain-jam-plan
+  - outline
 ---
 
 # claudikins-kernel:outline Command
@@ -75,7 +75,7 @@ State file: `.claude/plan-state.json`
 
 ## Phase 1: Brain-Jam
 
-Load the `brain-jam-plan` skill for methodology.
+Load the `outline` skill for methodology.
 
 **Requirements gathering:**
 
