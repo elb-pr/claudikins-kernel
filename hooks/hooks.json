@@ -175,7 +175,7 @@
         ]
       },
       {
-        "matcher": "claudikins-kernel:bananafishsoup",
+        "matcher": "claudikins-kernel:outline",
         "hooks": [
           {
             "type": "command",
