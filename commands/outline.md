@@ -1,7 +1,7 @@
 ---
 name: outline
 description: Iterative planning with human checkpoints at every phase
-argument-hint: [brief description of what to plan]
+argument-hint: [task description] [--skip-research] [--skip-review] [--session-id ID]
 model: opus
 color: blue
 status: stable
