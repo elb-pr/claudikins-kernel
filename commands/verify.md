@@ -1,5 +1,5 @@
 ---
-name: verify
+name: claudikins-kernel:verify
 description: Post-execution verification gate. Tests, lint, type-check, then see it working.
 argument-hint: [--branch NAME] [--scope SCOPE] [--skip-simplify] [--fix-lint]
 model: opus
@@ -95,12 +95,14 @@ Check for flags first:
 ### Prerequisite Check (via verify-init.sh hook)
 
 The SessionStart hook validates:
+
 1. execute-state.json exists (C-14 cross-command gate)
 2. Execute status is "completed"
 3. Creates initial verify-state.json
 4. Links to execute session for traceability
 
 **On validation failure:**
+
 ```
 ERROR: claudikins-kernel:execute has not been run
 
@@ -152,6 +154,7 @@ timeout 300 ${TEST_CMD}
 ```
 
 **On failure:**
+
 ```
 Tests failed.
 
@@ -162,6 +165,7 @@ Tests failed.
 
 **Flaky test detection (C-12):**
 If tests fail, offer re-run:
+
 ```
 Test failure detected. Could be flaky.
 
@@ -169,6 +173,7 @@ Test failure detected. Could be flaky.
 ```
 
 If re-run passes:
+
 ```
 Tests passed on retry. Likely flaky.
 
@@ -182,6 +187,7 @@ ${LINT_CMD}
 ```
 
 **On failure with --fix-lint:**
+
 ```
 Lint issues found. Auto-fix available.
 
@@ -189,11 +195,13 @@ Lint issues found. Auto-fix available.
 ```
 
 **After auto-fix, re-run lint to confirm:**
+
 ```bash
 ${LINT_CMD}
 ```
 
 If still failing after fix:
+
 ```
 Auto-fix did not resolve all issues.
 
@@ -210,6 +218,7 @@ ${TYPE_CMD}
 ```
 
 **On failure:**
+
 ```
 Type errors found.
 
@@ -256,8 +265,8 @@ Task(catastrophiser, {
     Output JSON with status and evidence.
   `,
   context: "fork",
-  model: "opus"
-})
+  model: "opus",
+});
 ```
 
 ### Verification Method Fallback (A-3)
@@ -288,6 +297,7 @@ Evidence: ${EVIDENCE_COUNT} items
 **Prerequisite:** Phase 2 (catastrophiser) must PASS
 
 If `--skip-simplify` flag set:
+
 ```
 Skipping code simplification.
 Proceeding directly to human checkpoint.
@@ -325,8 +335,8 @@ Task(cynic, {
     Output JSON with simplifications made and test status.
   `,
   context: "fork",
-  model: "opus"
-})
+  model: "opus",
+});
 ```
 
 ### Phase 3 Checkpoint
@@ -347,6 +357,7 @@ Tests still pass: ${TESTS_PASS}
 If verification keeps failing (3+ attempts):
 
 Check if Klaus available:
+
 ```bash
 # Check for claudikins-klaus plugin
 if mcp__claudikins-klaus available:
@@ -389,11 +400,13 @@ Ready to ship?
 ### Decision Handling
 
 **Ready to Ship:**
+
 - Set `all_checks_passed = true`
 - Set `human_checkpoint.decision = "ready_to_ship"`
 - verify-gate.sh will set `unlock_ship = true`
 
 **Needs Work:**
+
 - Set `human_checkpoint.decision = "needs_work"`
 - Ask: What needs to be fixed?
 
@@ -422,6 +435,7 @@ Where should we return to fix this?
   - Return to Phase 5 checkpoint when complete
 
 **Accept with Caveats:**
+
 - Set `human_checkpoint.decision = "ready_to_ship"`
 - Ask: What caveats should be noted?
 - Record caveats in state
@@ -446,6 +460,7 @@ When you're ready:
 ## Error Recovery
 
 On any failure:
+
 1. Save checkpoint immediately
 2. Log error to `.claude/errors/`
 3. Offer: [Retry] [Skip] [Klaus] [Manual intervention] [Abort]
@@ -455,6 +470,7 @@ Never lose work. Always checkpoint before risky operations.
 ## Context Collapse Handling
 
 On PreCompact event:
+
 1. preserve-state.sh saves critical state
 2. Mark session as "interrupted" (not abandoned)
 3. Resume instructions written to state file

@@ -1,5 +1,5 @@
 ---
-name: execute
+name: claudikins-kernel:execute
 description: Execute validated plans with isolated agents and two-stage review
 argument-hint: [plan-path or --resume or --status]
 model: opus

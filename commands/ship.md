@@ -1,5 +1,5 @@
 ---
-name: ship
+name: claudikins-kernel:ship
 description: Final shipping gate. PR creation, documentation updates, and merge with human approval.
 argument-hint: [--branch NAME] [--target BRANCH] [--skip-docs] [--squash|--preserve] [--dry-run]
 model: opus
@@ -91,6 +91,7 @@ Check for flags first:
 ### Prerequisite Check (via ship-init.sh hook)
 
 The SessionStart hook validates:
+
 1. verify-state.json exists and unlock_ship is true
 2. Code integrity (C-5): verified commit matches current HEAD
 3. File integrity (C-7): source file manifest unchanged
@@ -98,6 +99,7 @@ The SessionStart hook validates:
 5. Links to verify session for traceability
 
 **On validation failure:**
+
 ```
 ERROR: claudikins-kernel:verify gate check failed
 
@@ -107,6 +109,7 @@ Reason: ${FAILURE_REASON}
 ```
 
 **On code integrity failure (C-5, C-7):**
+
 ```
 ERROR: Code has changed since verification
 
@@ -152,14 +155,17 @@ Ready to proceed?
 ### Stage 1 Checkpoint
 
 On "Continue":
+
 - Set `phases.pre_ship_review.status = "APPROVED"`
 - Proceed to Stage 2
 
 On "Review Evidence":
+
 - Display evidence from `.claude/evidence/`
 - Return to checkpoint
 
 On "Back to Verify":
+
 - Set `status = "aborted"`
 - Output: "Run `claudikins-kernel:verify` to re-verify"
 
@@ -199,6 +205,7 @@ Closes #${ISSUE_NUMBER}
 ```
 
 Follow conventional commits format:
+
 - `feat:` for new features
 - `fix:` for bug fixes
 - `chore:` for maintenance
@@ -207,6 +214,7 @@ Follow conventional commits format:
 ### Stage 2 Checkpoint
 
 On "Accept":
+
 - Set `phases.commit_strategy.status = "APPROVED"`
 - Set `phases.commit_strategy.strategy = "squash|preserve"`
 - Record commit message in state
@@ -217,6 +225,7 @@ On "Accept":
 Update documentation to match shipped code. GRFP-style.
 
 **If --skip-docs flag set:**
+
 ```
 Skipping documentation updates.
 
@@ -228,7 +237,7 @@ Otherwise, spawn git-perfectionist:
 ### Spawn git-perfectionist
 
 ```typescript
-Task(git-perfectionist, {
+Task(git - perfectionist, {
   prompt: `
     Update documentation to match the shipped code.
 
@@ -244,8 +253,8 @@ Task(git-perfectionist, {
     Output JSON with files updated and sections approved.
   `,
   context: "fork",
-  model: "opus"
-})
+  model: "opus",
+});
 ```
 
 ### Stage 3 Checkpoint
@@ -262,6 +271,7 @@ Sections updated: ${SECTION_COUNT}
 ```
 
 On "Accept":
+
 - Set `phases.documentation.status = "COMPLETED"`
 - Proceed to Stage 4
 
@@ -335,11 +345,13 @@ CI Status: ${CI_STATUS}
 ```
 
 On "Wait for CI":
+
 - Poll CI status every 30 seconds
 - Show progress updates
 - When complete: return to checkpoint
 
 On "Merge now":
+
 - Proceed to Stage 5
 
 ## Stage 5: Final Merge
@@ -360,6 +372,7 @@ Overall: ${CI_OVERALL}
 ```
 
 **If CI fails:**
+
 ```
 CI failed.
 
@@ -390,6 +403,7 @@ git push origin --delete ${BRANCH_NAME}
 ```
 
 **If --dry-run flag set:**
+
 ```
 DRY RUN: Would merge PR #${PR_NUMBER}
 DRY RUN: Would delete branch ${BRANCH_NAME}
@@ -400,6 +414,7 @@ No changes made.
 ### Stage 5 Checkpoint
 
 On successful merge:
+
 - Set `phases.merge.status = "MERGED"`
 - Set `phases.merge.sha = ${MERGE_SHA}`
 - Set `unlock_merge = true`
@@ -425,6 +440,7 @@ Nice work!
 ## Error Recovery
 
 On any failure:
+
 1. Save checkpoint immediately
 2. Log error to `.claude/errors/`
 3. Offer: [Retry] [Skip] [Manual intervention] [Abort]
@@ -436,6 +452,7 @@ Never lose work. Always checkpoint before risky operations.
 Never force push to protected branches.
 
 If force push detected:
+
 ```
 ERROR: Cannot force push to ${TARGET_BRANCH}
 
@@ -447,6 +464,7 @@ ${TARGET_BRANCH} is a protected branch.
 ## Breaking Change Detection (S-24)
 
 If breaking changes detected:
+
 ```
 Breaking change detected!
 
@@ -461,6 +479,7 @@ This requires a MAJOR version bump.
 ## Context Collapse Handling
 
 On PreCompact event:
+
 1. preserve-state.sh saves critical state
 2. Mark session as "interrupted" (not abandoned)
 3. Resume instructions written to state file
