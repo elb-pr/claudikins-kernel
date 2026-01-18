@@ -8,14 +8,14 @@ status: stable
 version: "1.0.1"
 merge_strategy: none
 flags:
-  --session-id → Resume previous session by ID
-  --skip-research → Skip Phase 2 research
-  --skip-review → Skip Phase 5 review
-  --fast-mode → 60-second iteration cycles
-  --timing → Show phase durations for velocity tracking
-  --list-sessions → Show available sessions for resume
-  --output → Plan destination path
-  --run-verify → Run verification anytime
+  --session-id: Resume previous session by ID
+  --skip-research: Skip Phase 2 research
+  --skip-review: Skip Phase 5 review
+  --fast-mode: 60-second iteration cycles
+  --timing: Show phase durations for velocity tracking
+  --list-sessions: Show available sessions for resume
+  --output: Plan destination path
+  --run-verify: Run verification anytime
 agent_outputs:
   - agent: taxonomy-extremist
     capture_to: .claude/agent-outputs/research/
@@ -278,16 +278,16 @@ When you're ready:
 
 ## Flag Behaviours
 
-| Flag              | Effect                       |
-| ----------------- | ---------------------------- |
-| `--skip-research` | Jump from Phase 1 to Phase 3 |
-| `--skip-review`   | Jump from Phase 4 to Output  |
-| `--fast-mode`     | 60-second iteration cycles   |
-| `--session-id ID` | Resume previous session      |
-| `--timing`        | Show phase durations         |
-| `--list-sessions` | Show available sessions      |
-| `--output PATH`   | Custom output location       |
-| `--run-verify`    | Run verification anytime     |
+| Flag              | Effect                      |
+| ----------------- | --------------------------- |
+| `--skip-research` | Phase 1 → Phase 3 (skip)    |
+| `--skip-review`   | Jump from Phase 4 to Output |
+| `--fast-mode`     | 60-second iteration cycles  |
+| `--session-id ID` | Resume previous session     |
+| `--timing`        | Show phase durations        |
+| `--list-sessions` | Show available sessions     |
+| `--output PATH`   | Custom output location      |
+| `--run-verify`    | Run verification anytime    |
 
 ## Error Recovery
 
