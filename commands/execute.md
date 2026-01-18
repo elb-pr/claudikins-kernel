@@ -65,6 +65,7 @@ Skill(git-workflow)
 ```
 
 This provides:
+
 - Task decomposition patterns
 - Review criteria and thresholds
 - Batch checkpoint decision trees
@@ -77,7 +78,7 @@ State file: `.claude/execute-state.json`
 ```json
 {
   "session_id": "exec-YYYY-MM-DD-HHMM",
-  "plan_source": "path/toclaudikins-kernel:plan.md",
+  "plan_source": "path/to/plan.md",
   "started_at": "ISO timestamp",
   "status": "initialising|executing|paused|completed|aborted",
   "current_batch": 1,
@@ -109,6 +110,7 @@ Check for flags first:
 4. Build dependency graph
 
 **On validation failure:**
+
 ```
 Plan missing EXECUTION_TASKS markers.
 
@@ -118,7 +120,7 @@ The plan must include:
   ...
   <!-- EXECUTION_TASKS_END -->
 
-Run claudikins-kernel:plan to generate a properly formatted plan.
+Run claudikins-kernel:plans to generate a properly formatted plan.
 ```
 
 ### Dependency Graph
@@ -128,13 +130,31 @@ Build from parsed table:
 ```json
 {
   "tasks": [
-    {"id": "1", "name": "Create schema", "files": ["prisma/schema.prisma"], "deps": [], "batch": 1},
-    {"id": "2", "name": "Add service", "files": ["src/services/user.ts"], "deps": ["1"], "batch": 1},
-    {"id": "3", "name": "Create routes", "files": ["src/routes/user.ts"], "deps": ["2"], "batch": 2}
+    {
+      "id": "1",
+      "name": "Create schema",
+      "files": ["prisma/schema.prisma"],
+      "deps": [],
+      "batch": 1
+    },
+    {
+      "id": "2",
+      "name": "Add service",
+      "files": ["src/services/user.ts"],
+      "deps": ["1"],
+      "batch": 1
+    },
+    {
+      "id": "3",
+      "name": "Create routes",
+      "files": ["src/routes/user.ts"],
+      "deps": ["2"],
+      "batch": 2
+    }
   ],
   "batches": [
-    {"id": 1, "tasks": ["1", "2"], "status": "pending"},
-    {"id": 2, "tasks": ["3"], "status": "pending"}
+    { "id": 1, "tasks": ["1", "2"], "status": "pending" },
+    { "id": 2, "tasks": ["3"], "status": "pending" }
   ]
 }
 ```
@@ -168,11 +188,11 @@ If estimated > 400 LOC:
 
 Per babyclaude's context budget guidelines:
 
-| Resource | Soft Limit | Hard Limit | Pre-Execution Action |
-|----------|------------|------------|----------------------|
-| Files to modify | 5 | 10 | Warn if exceeded |
-| Lines of code | 200 | 400 | Suggest split |
-| Dependencies | 3 | 5 | Check batch ordering |
+| Resource        | Soft Limit | Hard Limit | Pre-Execution Action |
+| --------------- | ---------- | ---------- | -------------------- |
+| Files to modify | 5          | 10         | Warn if exceeded     |
+| Lines of code   | 200        | 400        | Suggest split        |
+| Dependencies    | 3          | 5          | Check batch ordering |
 
 ```
 Task ${task.id} context budget check:
@@ -212,6 +232,7 @@ Creating branch: execute/task-${id}-${slug}-${uuid}
 ```
 
 The hook:
+
 1. Verifies clean working directory
 2. Creates branch with UUID suffix
 3. Updates state with branch name
@@ -227,10 +248,10 @@ Task(babyclaude, {
 
     Implement: ${task.name}
 
-    Files to modify: ${task.files.join(', ')}
+    Files to modify: ${task.files.join(", ")}
 
     Acceptance criteria:
-    ${task.criteria.map(c => `- ${c}`).join('\n')}
+    ${task.criteria.map((c) => `- ${c}`).join("\n")}
 
     Requirements:
     - Implement EXACTLY what is specified
@@ -239,13 +260,14 @@ Task(babyclaude, {
     - Output JSON with status and files_changed
   `,
   context: "fork",
-  model: "opus"
-})
+  model: "opus",
+});
 ```
 
 ### 2.3 Branch Guard (via git-branch-guard.sh hook)
 
 During execution, PreToolUse hook blocks:
+
 - Branch switching (checkout, switch)
 - Destructive operations (reset --hard, clean -fd)
 - Direct pushes to protected branches
@@ -254,6 +276,7 @@ During execution, PreToolUse hook blocks:
 ### 2.4 Progress Tracking (via execute-tracker.sh hook)
 
 PostToolUse hook:
+
 - Records tool calls for tracing
 - Updates stuck score
 - Warns if agent appears stuck (score >= 60)
@@ -261,6 +284,7 @@ PostToolUse hook:
 ### 2.5 Completion Capture (via task-completion-capture.sh hook)
 
 On SubagentStop:
+
 - Captures agent output to `.claude/task-outputs/${task.id}.json`
 - Updates task status in state
 - Completes span in trace
@@ -273,7 +297,7 @@ After task completes, two-stage review:
 ### 3.1 Spec Review
 
 ```typescript
-Task(spec-reviewer, {
+Task(spec - reviewer, {
   prompt: `
     Review task ${task.id}: ${task.name}
 
@@ -286,11 +310,12 @@ Task(spec-reviewer, {
     Verify EACH criterion has evidence. Output JSON verdict.
   `,
   context: "fork",
-  model: "opus"
-})
+  model: "opus",
+});
 ```
 
 **Output schema:**
+
 ```json
 {
   "task_id": "1",
@@ -304,7 +329,7 @@ Task(spec-reviewer, {
 ### 3.2 Code Review (if spec passes)
 
 ```typescript
-Task(code-reviewer, {
+Task(code - reviewer, {
   prompt: `
     Review code quality for task ${task.id}
 
@@ -317,11 +342,12 @@ Task(code-reviewer, {
     Only report issues with confidence >= 26.
   `,
   context: "fork",
-  model: "opus"
-})
+  model: "opus",
+});
 ```
 
 **Output schema:**
+
 ```json
 {
   "task_id": "1",
@@ -510,11 +536,11 @@ Checkpoints are saved to `.claude/checkpoints/checkpoint-{timestamp}.json`:
 
 When resuming:
 
-| Scenario | Allowed Actions |
-|----------|-----------------|
-| Mid-batch (task in progress) | [Continue task] [Restart task] [Skip task] |
-| Between batches | [Continue to next batch] [Restart current batch] |
-| After failure | [Retry failed task] [Skip failed task] [Abort] |
+| Scenario                     | Allowed Actions                                  |
+| ---------------------------- | ------------------------------------------------ |
+| Mid-batch (task in progress) | [Continue task] [Restart task] [Skip task]       |
+| Between batches              | [Continue to next batch] [Restart current batch] |
+| After failure                | [Retry failed task] [Skip failed task] [Abort]   |
 
 You cannot jump to arbitrary batches - resume continues from the checkpoint state.
 

@@ -19,9 +19,11 @@ A structured workflow plugin for Claude Code that enforces quality through human
 # Install the plugin
 /plugin install claudikins-kernel
 ```
+
 ### System Requirements
 
 - `jq` - Command-line JSON processor (used by hook scripts)
+
   ```bash
   # Ubuntu/Debian
   sudo apt install jq
@@ -32,19 +34,18 @@ A structured workflow plugin for Claude Code that enforces quality through human
   # Windows (via scoop)
   scoop install jq
   ```
-  
-Restart Claude Code. Done.
 
+Restart Claude Code. Done.
 
 ## The Big Picture
 
-You have 4 commands that flow in sequence: `claudikins-kernel:plan` → `claudikins-kernel:execute` → `claudikins-kernel:verify` → `claudikins-kernel:ship`
+You have 4 commands that flow in sequence: `claudikins-kernel:plans` → `claudikins-kernel:execute` → `claudikins-kernel:verify` → `claudikins-kernel:ship`
 
 Each command has gates that prevent you skipping steps. You can't execute without a plan, can't verify without executed code, can't ship without verification passing. The system enforces this.
 
 ---
 
-## claudikins-kernel:plan - "Let's figure out what we're building"
+## claudikins-kernel:plans - "Let's figure out what we're building"
 
 **Purpose:** Iterative brainstorming with Claude until you have a solid plan.
 
@@ -77,7 +78,6 @@ Each command has gates that prevent you skipping steps. You can't execute withou
 1. **Load & validate** - Parses your plan.md, extracts the task table, builds a dependency graph, figures out which tasks can run in parallel (same batch) vs which must wait (dependencies).
 
 2. **Per-batch loop:**
-
    - **Batch start checkpoint** - Shows you "Batch 1/3: [task-1, task-2]. Ready?" You can execute, skip tasks, reorder, or pause.
 
    - **Execute tasks** - For each task, creates a git branch (`execute/task-1-auth-middleware`), spawns a fresh "babyclaude" agent. Babyclaude gets the task description, acceptance criteria, and nothing else. It implements exactly what's asked, runs tests, commits, and outputs a JSON report.
@@ -95,6 +95,7 @@ Each command has gates that prevent you skipping steps. You can't execute withou
 **Output:** Implemented code on branches (or merged), execute-state.json tracking what was done.
 
 **Key agents:**
+
 - babyclaude (Sonnet, one per task, isolated)
 - spec-reviewer (Haiku, mechanical compliance check)
 - code-reviewer (Opus, quality judgement)
@@ -131,6 +132,7 @@ Each command has gates that prevent you skipping steps. You can't execute withou
 **Output:** verify-state.json with `unlock_ship: true` if approved. Also generates a file manifest (SHA256 hashes of all source files) so claudikins-kernel:ship can detect if code changed after verification.
 
 **Key agents:**
+
 - catastrophiser (Opus, sees code running, captures evidence)
 - cynic (Opus, optional polish pass)
 
@@ -178,25 +180,27 @@ Each command has gates that prevent you skipping steps. You can't execute withou
 
 ## Agents
 
-| Agent | Model | Purpose | Used In |
-|-------|-------|---------|---------|
-| taxonomy-extremist | Opus | Read-only research | claudikins-kernel:plan |
-| babyclaude | Opus | Implement single task | claudikins-kernel:execute |
-| spec-reviewer | Opus | Did it match the spec? | claudikins-kernel:execute |
-| code-reviewer | Opus | Is the code good? | claudikins-kernel:execute |
-| catastrophiser | Opus | See code actually working | claudikins-kernel:verify |
-| cynic | Opus | Polish and simplify | claudikins-kernel:verify |
-| git-perfectionist | Opus | Update docs for shipping | claudikins-kernel:ship |
+| Agent              | Model | Purpose                   | Used In                   |
+| ------------------ | ----- | ------------------------- | ------------------------- |
+| taxonomy-extremist | Opus  | Read-only research        | claudikins-kernel:plans   |
+| babyclaude         | Opus  | Implement single task     | claudikins-kernel:execute |
+| spec-reviewer      | Opus  | Did it match the spec?    | claudikins-kernel:execute |
+| code-reviewer      | Opus  | Is the code good?         | claudikins-kernel:execute |
+| catastrophiser     | Opus  | See code actually working | claudikins-kernel:verify  |
+| cynic              | Opus  | Polish and simplify       | claudikins-kernel:verify  |
+| git-perfectionist  | Opus  | Update docs for shipping  | claudikins-kernel:ship    |
 
 ---
 
 ## Dependencies
 
 **Recommended plugins:**
+
 - `claudikins-tool-executor` - MCP access for research and verification
 - `claudikins-automatic-context-manager` - Context monitoring at 60%
 
 **Optional plugins:**
+
 - `claudikins-klaus` - Escalation when stuck
 - `claudikins-github-readme` - GRFP methodology for docs
 
@@ -221,13 +225,13 @@ All hooks from all enabled plugins are additive. The only conflict scenario is i
 The git-workflow skill draws from distributed systems engineering (microservices, Kubernetes, SRE practices) but adapts these patterns for Claude Code's agent-based execution:
 
 | Distributed Systems Pattern | Claude Code Adaptation |
-|-----------------------------|------------------------|
-| Circuit breakers | Stuck agent detection |
-| Distributed tracing | Execution spans |
-| Load shedding | Batch size limits |
-| Coordinated checkpoints | Batch-boundary saves |
-| Deadline propagation | Task time budgets |
-| Exponential backoff | Retry with jitter |
+| --------------------------- | ---------------------- |
+| Circuit breakers            | Stuck agent detection  |
+| Distributed tracing         | Execution spans        |
+| Load shedding               | Batch size limits      |
+| Coordinated checkpoints     | Batch-boundary saves   |
+| Deadline propagation        | Task time budgets      |
+| Exponential backoff         | Retry with jitter      |
 
 Same principles, different scale. The goal is reliability through structure - not speed through parallelism.
 
@@ -238,6 +242,7 @@ Same principles, different scale. The goal is reliability through structure - no
 ### System Requirements
 
 - `jq` - Command-line JSON processor (used by hook scripts)
+
   ```bash
   # Ubuntu/Debian
   sudo apt install jq
@@ -249,12 +254,11 @@ Same principles, different scale. The goal is reliability through structure - no
   scoop install jq
   ```
 
-
 ## Status
 
 Planning complete. Implementation pending.
 
-See `docsclaudikins-kernel:plans/` for detailed architecture documents.
+See `docs/plans/` for detailed architecture documents.
 
 ---
 

@@ -175,7 +175,7 @@
         ]
       },
       {
-        "matcher": "claudikins-kernel:plan",
+        "matcher": "claudikins-kernel:plans",
         "hooks": [
           {
             "type": "command",

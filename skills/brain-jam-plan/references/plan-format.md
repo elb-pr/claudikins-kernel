@@ -25,11 +25,13 @@ What's IN scope and what's OUT.
 ## Scope
 
 ### In Scope
+
 - Password reset email functionality
 - Reset token generation and validation
 - Password update endpoint
 
 ### Out of Scope
+
 - Password strength requirements (separate task)
 - Rate limiting (future enhancement)
 - SMS-based reset (not requested)
@@ -59,27 +61,29 @@ The work broken down into executable units.
 ## Tasks
 
 <!-- EXECUTION_TASKS_START -->
-| # | Task | Files | Deps | Batch |
-|---|------|-------|------|-------|
-| 1 | Add password reset token to schema | prisma/schema.prisma | - | 1 |
-| 2 | Create reset token service | src/services/resetToken.ts | 1 | 1 |
-| 3 | Add forgot-password endpoint | src/routes/auth.ts | 2 | 2 |
-| 4 | Create reset-password endpoint | src/routes/auth.ts | 2 | 2 |
-| 5 | Add email template | src/emails/passwordReset.tsx | - | 1 |
-| 6 | Wire up email sending | src/services/email.ts | 5 | 2 |
-| 7 | Add tests | src/tests/auth.test.ts | 3,4 | 3 |
+
+| #   | Task                               | Files                        | Deps | Batch |
+| --- | ---------------------------------- | ---------------------------- | ---- | ----- |
+| 1   | Add password reset token to schema | prisma/schema.prisma         | -    | 1     |
+| 2   | Create reset token service         | src/services/resetToken.ts   | 1    | 1     |
+| 3   | Add forgot-password endpoint       | src/routes/auth.ts           | 2    | 2     |
+| 4   | Create reset-password endpoint     | src/routes/auth.ts           | 2    | 2     |
+| 5   | Add email template                 | src/emails/passwordReset.tsx | -    | 1     |
+| 6   | Wire up email sending              | src/services/email.ts        | 5    | 2     |
+| 7   | Add tests                          | src/tests/auth.test.ts       | 3,4  | 3     |
+
 <!-- EXECUTION_TASKS_END -->
 ```
 
 **Column definitions:**
 
-| Column | Description |
-|--------|-------------|
-| # | Task number (sequential) |
-| Task | Single-sentence description |
-| Files | Primary file(s) affected |
-| Deps | Task numbers this depends on, or `-` for none |
-| Batch | Execution batch (tasks in same batch can run in parallel) |
+| Column | Description                                               |
+| ------ | --------------------------------------------------------- |
+| #      | Task number (sequential)                                  |
+| Task   | Single-sentence description                               |
+| Files  | Primary file(s) affected                                  |
+| Deps   | Task numbers this depends on, or `-` for none             |
+| Batch  | Execution batch (tasks in same batch can run in parallel) |
 
 ### 5. Dependencies
 
@@ -89,14 +93,17 @@ External dependencies and integration points.
 ## Dependencies
 
 ### External
+
 - Resend API for email sending (already configured)
 - Prisma for database access
 
 ### Internal
+
 - Existing User model
 - Existing email service wrapper
 
 ### New
+
 - None required
 ```
 
@@ -107,11 +114,11 @@ What could go wrong and how to handle it.
 ```markdown
 ## Risks & Mitigations
 
-| Risk | Likelihood | Impact | Mitigation |
-|------|------------|--------|------------|
-| Email delivery delays | Medium | Medium | Add retry logic, notify user of delay |
-| Token collision | Low | High | Use UUID v4, check uniqueness |
-| Brute force attacks | Medium | High | Rate limit endpoint (future task) |
+| Risk                  | Likelihood | Impact | Mitigation                            |
+| --------------------- | ---------- | ------ | ------------------------------------- |
+| Email delivery delays | Medium     | Medium | Add retry logic, notify user of delay |
+| Token collision       | Low        | High   | Use UUID v4, check uniqueness         |
+| Brute force attacks   | Medium     | High   | Rate limit endpoint (future task)     |
 ```
 
 ### 7. Verification Checklist
@@ -122,11 +129,13 @@ How to verify the implementation works.
 ## Verification
 
 ### Automated
+
 - [ ] Unit tests for token service pass
 - [ ] Integration tests for endpoints pass
 - [ ] Email template renders correctly
 
 ### Manual
+
 - [ ] Request reset for existing user - email received
 - [ ] Request reset for non-existent user - no email, no error shown
 - [ ] Use valid token - password updated
@@ -136,9 +145,9 @@ How to verify the implementation works.
 
 ## File Naming
 
-Save plans to: `.claude/plansclaudikins-kernel:plan-{session-id}.md`
+Save plans to: `.claude/plans/plan-{session-id}.md`
 
-Example: `.claude/plansclaudikins-kernel:plan-2026-01-16-1430.md`
+Example: `.claude/plans/plan-2026-01-16-1430.md`
 
 ## Machine-Readable Markers
 

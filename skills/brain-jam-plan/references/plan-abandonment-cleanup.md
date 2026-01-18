@@ -24,6 +24,7 @@ Research and draft work will be archived (recoverable for 7 days).
 ### Verbal Abandonment
 
 User says something like:
+
 - "Forget this"
 - "Never mind"
 - "Let's do something else"
@@ -86,7 +87,7 @@ Archived (recoverable for 7 days):
 - Research findings (3 files)
 - Partial draft (2 sections)
 
-To recover: claudikins-kernel:plan --session-id plan-2026-01-16-1430
+To recover: claudikins-kernel:plans --session-id plan-2026-01-16-1430
 ```
 
 ## Recovery Option
@@ -94,7 +95,7 @@ To recover: claudikins-kernel:plan --session-id plan-2026-01-16-1430
 Abandoned plans can be resumed within 7 days:
 
 ```bash
-claudikins-kernel:plan --session-id plan-2026-01-16-1430
+claudikins-kernel:plans --session-id plan-2026-01-16-1430
 ```
 
 Recovery flow:
@@ -111,13 +112,13 @@ After 7 days, archived content is eligible for deletion on next cleanup.
 
 ## Retention Policy
 
-| Content | Retention | Reason |
-|---------|-----------|--------|
-| plan-state.json | 7 days | Recovery reference |
-| Research findings | 7 days | May inform future plans |
-| Partial drafts | 7 days | Effort preservation |
-| Lock files | Immediate delete | No value |
-| Temp files | Immediate delete | No value |
+| Content           | Retention        | Reason                  |
+| ----------------- | ---------------- | ----------------------- |
+| plan-state.json   | 7 days           | Recovery reference      |
+| Research findings | 7 days           | May inform future plans |
+| Partial drafts    | 7 days           | Effort preservation     |
+| Lock files        | Immediate delete | No value                |
+| Temp files        | Immediate delete | No value                |
 
 ## Cleanup Script
 

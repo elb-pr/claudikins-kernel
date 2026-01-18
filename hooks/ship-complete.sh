@@ -14,9 +14,8 @@ SHIP_STATE="$CLAUDE_DIR/ship-state.json"
 # ============================================
 
 if [ ! -f "$SHIP_STATE" ]; then
-  echo "ERROR: ship-state.json not found" >&2
-  echo "The claudikins-kernel:ship session may not have initialized properly." >&2
-  exit 2
+  # No ship session - silently exit (command wasn't run)
+  exit 0
 fi
 
 # ============================================

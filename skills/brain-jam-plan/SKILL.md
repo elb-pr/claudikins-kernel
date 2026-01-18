@@ -1,6 +1,6 @@
 ---
 name: brain-jam-plan
-description: Use when running claudikins-kernel:plan, brainstorming implementation approaches, gathering requirements iteratively, structuring complex technical plans, or facing analysis paralysis with too many options — provides iterative human-in-the-loop planning with explicit checkpoints and trade-off presentation
+description: Use when running claudikins-kernel:plans, brainstorming implementation approaches, gathering requirements iteratively, structuring complex technical plans, or facing analysis paralysis with too many options — provides iterative human-in-the-loop planning with explicit checkpoints and trade-off presentation
 ---
 
 # Brain-Jam Planning Methodology
@@ -17,7 +17,7 @@ Planning is an iterative conversation, not a production line. The human stays in
 
 Use this skill when:
 
-- Running the `claudikins-kernel:plan` command
+- Running the `claudikins-kernel:plans` command
 - Requirements are unclear or keep changing
 - Multiple valid approaches exist and you can't choose
 - User wants involvement in decisions (not just receive a plan)
@@ -32,6 +32,7 @@ Use this skill when:
 **One question at a time. Wait for the answer.**
 
 Key questions to answer:
+
 1. What problem are we solving?
 2. What does success look like?
 3. What constraints exist?
@@ -52,13 +53,13 @@ Before proposing solutions, understand the landscape:
 
 Generate 2-3 distinct approaches. Each must include:
 
-| Element | Purpose |
-|---------|---------|
+| Element | Purpose               |
+| ------- | --------------------- |
 | Summary | 1-2 sentence overview |
-| Pros | Clear benefits |
-| Cons | Honest trade-offs |
-| Effort | low / medium / high |
-| Risk | low / medium / high |
+| Pros    | Clear benefits        |
+| Cons    | Honest trade-offs     |
+| Effort  | low / medium / high   |
+| Risk    | low / medium / high   |
 
 **Always recommend one with reasoning.** See [approach-template.md](references/approach-template.md).
 
@@ -73,21 +74,25 @@ Draft one section at a time. Get approval before moving on.
 These rules have no exceptions:
 
 **One question at a time.**
+
 - Not "let me ask a few things"
 - Not "quick questions"
 - One question. Wait. Process answer. Next question.
 
 **Always present 2-3 approaches.**
+
 - Not "here's what I recommend"
 - Not "the obvious choice is..."
 - Present options. Recommend one. User decides.
 
 **Checkpoint before proceeding.**
+
 - Not "I'll assume that's fine"
 - Not "continuing unless you object"
 - Explicit approval. "Does this look right?" Wait for yes.
 
 **Never fabricate research.**
+
 - Not "based on my understanding"
 - Not "typically in codebases like this"
 - If you don't know, research or ask. Don't invent.
@@ -111,10 +116,12 @@ Plans must include machine-readable task markers for `claudikins-kernel:execute`
 
 ```markdown
 <!-- EXECUTION_TASKS_START -->
-| # | Task | Files | Deps | Batch |
-|---|------|-------|------|-------|
-| 1 | Create schema | prisma/schema.prisma | - | 1 |
-| 2 | Add service | src/services/user.ts | 1 | 1 |
+
+| #   | Task          | Files                | Deps | Batch |
+| --- | ------------- | -------------------- | ---- | ----- |
+| 1   | Create schema | prisma/schema.prisma | -    | 1     |
+| 2   | Add service   | src/services/user.ts | 1    | 1     |
+
 <!-- EXECUTION_TASKS_END -->
 ```
 
@@ -135,16 +142,16 @@ See [plan-format.md](references/plan-format.md) for complete structure.
 
 Agents under pressure find excuses. These are all violations:
 
-| Excuse | Reality |
-|--------|---------|
-| "I'll batch questions to save time" | Batching causes missed requirements. One at a time. |
-| "User knows what they want, skip brain-jam" | Assumptions cause rework. Gather requirements explicitly. |
-| "I'll propose solutions while gathering requirements" | Solutions bias requirements. Understand first, solve second. |
-| "User implied preference, don't need alternatives" | Implied ≠ decided. Always present 2-3 options. |
-| "This is simple, don't need checkpoints" | Simple plans still fail. Checkpoints catch errors early. |
-| "I already know the right approach" | Your confidence isn't approval. User decides. |
-| "Alternatives will confuse them" | Confusion means requirements are unclear. Clarify. |
-| "I'll get approval for multiple sections at once" | Batched approvals hide problems. One section, one checkpoint. |
+| Excuse                                                | Reality                                                       |
+| ----------------------------------------------------- | ------------------------------------------------------------- |
+| "I'll batch questions to save time"                   | Batching causes missed requirements. One at a time.           |
+| "User knows what they want, skip brain-jam"           | Assumptions cause rework. Gather requirements explicitly.     |
+| "I'll propose solutions while gathering requirements" | Solutions bias requirements. Understand first, solve second.  |
+| "User implied preference, don't need alternatives"    | Implied ≠ decided. Always present 2-3 options.                |
+| "This is simple, don't need checkpoints"              | Simple plans still fail. Checkpoints catch errors early.      |
+| "I already know the right approach"                   | Your confidence isn't approval. User decides.                 |
+| "Alternatives will confuse them"                      | Confusion means requirements are unclear. Clarify.            |
+| "I'll get approval for multiple sections at once"     | Batched approvals hide problems. One section, one checkpoint. |
 
 **All of these mean: Follow the methodology. No shortcuts.**
 
@@ -165,14 +172,14 @@ If you're thinking any of these, you're about to violate the methodology:
 
 ## Edge Case Handling
 
-| Situation | Reference |
-|-----------|-----------|
-| Context collapse mid-plan | [session-collapse-recovery.md](references/session-collapse-recovery.md) |
-| Endless iteration loop | [iteration-limits.md](references/iteration-limits.md) |
-| Research taking too long | [research-timeouts.md](references/research-timeouts.md) |
+| Situation                        | Reference                                                                     |
+| -------------------------------- | ----------------------------------------------------------------------------- |
+| Context collapse mid-plan        | [session-collapse-recovery.md](references/session-collapse-recovery.md)       |
+| Endless iteration loop           | [iteration-limits.md](references/iteration-limits.md)                         |
+| Research taking too long         | [research-timeouts.md](references/research-timeouts.md)                       |
 | Approaches contradict each other | [approach-conflict-resolution.md](references/approach-conflict-resolution.md) |
-| User abandons plan | [plan-abandonment-cleanup.md](references/plan-abandonment-cleanup.md) |
-| Requirements keep changing | [requirement-stability.md](references/requirement-stability.md) |
+| User abandons plan               | [plan-abandonment-cleanup.md](references/plan-abandonment-cleanup.md)         |
+| Requirements keep changing       | [requirement-stability.md](references/requirement-stability.md)               |
 
 ## References
 

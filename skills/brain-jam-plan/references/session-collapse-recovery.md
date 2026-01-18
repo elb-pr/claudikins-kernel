@@ -6,12 +6,12 @@ When context collapses mid-planning, follow this procedure to recover gracefully
 
 Context collapse can happen in several ways:
 
-| Signal | Source | Meaning |
-|--------|--------|---------|
-| PreCompact event | Claude Code | Context window approaching limit |
-| ACM 60% threshold | claudikins-automatic-context-manager | Recommended handoff point |
-| Session timeout | Claude Code | Idle timeout or connection lost |
-| User closes terminal | System | Unexpected termination |
+| Signal               | Source                               | Meaning                          |
+| -------------------- | ------------------------------------ | -------------------------------- |
+| PreCompact event     | Claude Code                          | Context window approaching limit |
+| ACM 60% threshold    | claudikins-automatic-context-manager | Recommended handoff point        |
+| Session timeout      | Claude Code                          | Idle timeout or connection lost  |
+| User closes terminal | System                               | Unexpected termination           |
 
 ## State Preservation (PreCompact Hook)
 
@@ -35,9 +35,9 @@ When `preserve-state.sh` fires, it captures:
     "review": "pending"
   },
   "human_decisions": [
-    {"phase": "brain_jam", "decision": "Confirmed requirements"},
-    {"phase": "research", "decision": "Selected codebase mode"},
-    {"phase": "approaches", "decision": "Chose Approach B"}
+    { "phase": "brain_jam", "decision": "Confirmed requirements" },
+    { "phase": "research", "decision": "Selected codebase mode" },
+    { "phase": "approaches", "decision": "Chose Approach B" }
   ],
   "research_findings": ".claude/agent-outputs/research/merged.json",
   "resume_instructions": "Continue from 'Tasks' section draft. User chose Approach B."
@@ -48,7 +48,7 @@ When `preserve-state.sh` fires, it captures:
 
 ### Step 1: Detect Previous Session
 
-On `claudikins-kernel:plan` invocation, check for existing state:
+On `claudikins-kernel:plans` invocation, check for existing state:
 
 ```bash
 STATE_FILE=".claude/plan-state.json"
@@ -77,6 +77,7 @@ Approach selected: B - JWT with HttpOnly Cookies
 If user chooses to resume:
 
 1. **Load state file**
+
    ```
    Read .claude/plan-state.json
    ```
@@ -87,6 +88,7 @@ If user chooses to resume:
    - Load partial draft content
 
 3. **Summarise for user**
+
    ```
    Resuming planning session plan-2026-01-16-1430.
 
@@ -109,11 +111,13 @@ If user chooses to resume:
 If user chooses fresh start:
 
 1. Archive old state
+
    ```bash
    mv .claude/plan-state.json .claude/archive/plan-state-{timestamp}.json
    ```
 
 2. Clear research cache
+
    ```bash
    rm -rf .claude/agent-outputs/research/*
    ```
@@ -131,6 +135,7 @@ WARNING: Session is 6 hours old. Research findings may be outdated.
 ```
 
 If resuming stale session:
+
 - Flag research as "potentially outdated"
 - Offer to rerun taxonomy-extremist before continuing
 
@@ -146,6 +151,7 @@ File may be corrupted: .claude/plan-state.json
 ```
 
 For manual recovery:
+
 - Show raw file content
 - Let user extract useful info
 - Begin new session
@@ -177,12 +183,12 @@ Current project: /home/user/this-project
 
 ## State File Locations
 
-| File | Purpose |
-|------|---------|
-| `.claude/plan-state.json` | Current/latest session state |
-| `.claude/archive/plan-state-*.json` | Archived sessions |
-| `.claude/agent-outputs/research/*.json` | Research findings |
-| `.claude/plansclaudikins-kernel:plan-*.md` | Completed plans |
+| File                                    | Purpose                      |
+| --------------------------------------- | ---------------------------- |
+| `.claude/plan-state.json`               | Current/latest session state |
+| `.claude/archive/plan-state-*.json`     | Archived sessions            |
+| `.claude/agent-outputs/research/*.json` | Research findings            |
+| `.claude/plans/plan-*.md`               | Completed plans              |
 
 ## Testing Recovery
 

@@ -1,7 +1,7 @@
 ---
 name: taxonomy-extremist
 description: |
-  Research agent for /claudikins-kernel:plan command. Explores codebase, documentation, or external sources to gather context before planning decisions. This agent is READ-ONLY - it cannot modify files.
+  Research agent for /claudikins-kernel:plans command. Explores codebase, documentation, or external sources to gather context before planning decisions. This agent is READ-ONLY - it cannot modify files.
 
   Use this agent when you need to research before making planning decisions. Spawn 2-3 instances in parallel with different modes for comprehensive coverage.
 

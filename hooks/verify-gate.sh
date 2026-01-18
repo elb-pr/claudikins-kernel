@@ -38,12 +38,8 @@ STOP_REASON=$(echo "$INPUT" | jq -r '.stop_reason // "unknown"')
 
 # Check if verify state exists
 if [ ! -f "$VERIFY_STATE" ]; then
-    cat <<EOF >&2
-Verification not started.
-
-Run claudikins-kernel:verify to start verification process.
-EOF
-    exit 2
+    # No verify session - silently exit (command wasn't run)
+    exit 0
 fi
 
 # === File Locking (C-8) ===

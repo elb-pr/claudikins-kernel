@@ -39,7 +39,7 @@ jq --arg ts "$TIMESTAMP" --arg trigger "$TRIGGER" '
   .status = "interrupted" |
   .interrupted_at = $ts |
   .interrupted_by = $trigger |
-  .resume_instructions = "Session interrupted during \(.phase // "unknown") phase. Use claudikins-kernel:plan --session-id \(.session_id) to resume."
+  .resume_instructions = "Session interrupted during \(.phase // "unknown") phase. Use claudikins-kernel:plans --session-id \(.session_id) to resume."
 ' "$PLAN_STATE" > "${PLAN_STATE}.tmp" && mv "${PLAN_STATE}.tmp" "$PLAN_STATE"
 
 # Create a backup in archive
@@ -55,7 +55,7 @@ cat <<EOF
 {
   "hookSpecificOutput": {
     "hookEventName": "PreCompact",
-    "additionalContext": "Plan session interrupted and state preserved. Session: ${SESSION_ID}. To resume after context compaction: claudikins-kernel:plan --session-id ${SESSION_ID}"
+    "additionalContext": "Plan session interrupted and state preserved. Session: ${SESSION_ID}. To resume after context compaction: claudikins-kernel:plans --session-id ${SESSION_ID}"
   }
 }
 EOF

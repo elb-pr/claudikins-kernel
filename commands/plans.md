@@ -1,5 +1,5 @@
 ---
-name: plan
+name: plans
 description: Iterative planning with human checkpoints at every phase
 argument-hint: [brief description of what to plan]
 model: opus
@@ -32,7 +32,7 @@ skills:
   - brain-jam-plan
 ---
 
-# claudikins-kernel:plan Command
+# claudikins-kernel:plans Command
 
 You are orchestrating an iterative planning workflow with human checkpoints at every phase.
 
@@ -78,18 +78,21 @@ State file: `.claude/plan-state.json`
 Load the `brain-jam-plan` skill for methodology.
 
 **Requirements gathering:**
+
 1. Ask ONE question at a time
 2. Wait for answer before next question
 3. Use AskUserQuestion with specific options
 4. Never assume - always clarify
 
 **Key questions to answer:**
+
 - What problem are we solving?
 - What constraints apply?
 - What's the success criteria?
 - What's explicitly OUT of scope?
 
 **Checkpoint:**
+
 ```
 [Continue to Research] [Revise Requirements] [Abandon Plan]
 ```
@@ -97,6 +100,7 @@ Load the `brain-jam-plan` skill for methodology.
 ## Phase 2: Research (default ON, skip with --skip-research)
 
 If `--skip-research` flag set:
+
 ```
 WARNING: Skipping research reduces planning confidence to ~60%
 Proceed without research context? [Yes] [No, run research]
@@ -112,33 +116,38 @@ taxonomy-extremist modes:
 ```
 
 **Mode selection via AskUserQuestion:**
+
 ```
 Which research modes should we use?
 [Codebase] [Docs] [External] [All three]
 ```
 
 **Agent spawning:**
+
 ```typescript
-Task(taxonomy-extremist, {
+Task(taxonomy - extremist, {
   prompt: "Research ${topic} for planning ${task}",
-  context: "fork",  // Isolated context
-  mode: "codebase|docs|external"
-})
+  context: "fork", // Isolated context
+  mode: "codebase|docs|external",
+});
 ```
 
 **Results collection:**
+
 - SubagentStop hook captures output to `.claude/agent-outputs/research/`
 - Merge findings: `jq -s 'add' .claude/agent-outputs/research/*.json`
 - Present summarised findings to user
 
 **Empty findings handling:**
 If `search_exhausted: true` with no findings:
+
 ```
 Research found no relevant results.
 [Rerun with different query] [Skip research] [Manual input]
 ```
 
 **Checkpoint:**
+
 ```
 [Continue to Approaches] [Back to Brain-jam] [Skip] [Abandon]
 ```
@@ -148,6 +157,7 @@ Research found no relevant results.
 Using research findings and requirements, generate 2-3 distinct approaches.
 
 **Each approach must include:**
+
 - Summary (1-2 sentences)
 - Pros (bullet list)
 - Cons (bullet list)
@@ -155,8 +165,10 @@ Using research findings and requirements, generate 2-3 distinct approaches.
 - Risk level (low/medium/high)
 
 **Format (from approach-template.md):**
+
 ```markdown
 ### Approach A: [Name]
+
 **Summary:** ...
 **Pros:** ...
 **Cons:** ...
@@ -168,6 +180,7 @@ Using research findings and requirements, generate 2-3 distinct approaches.
 **Present recommendation with reasoning.**
 
 **Checkpoint:**
+
 ```
 [Approach A] [Approach B] [Approach C] [Revise Approaches] [Back to Research] [Abandon]
 ```
@@ -177,6 +190,7 @@ Using research findings and requirements, generate 2-3 distinct approaches.
 Section-by-section drafting with approval after each section.
 
 **Plan structure (from plan-format.md):**
+
 1. Problem Statement
 2. Scope & Boundaries
 3. Success Criteria
@@ -186,6 +200,7 @@ Section-by-section drafting with approval after each section.
 7. Verification Checklist
 
 **For each section:**
+
 1. Draft the section
 2. Present to user
 3. Get approval via AskUserQuestion
@@ -193,17 +208,21 @@ Section-by-section drafting with approval after each section.
 5. Move to next section only after approval
 
 **Task format for claudikins-kernel:execute compatibility:**
+
 ```markdown
 <!-- EXECUTION_TASKS_START -->
-| # | Task | Files | Deps | Batch |
-|---|------|-------|------|-------|
-| 1 | Create user schema | prisma/schema.prisma | - | 1 |
-| 2 | Add user service | src/services/user.ts | 1 | 1 |
-| 3 | Create user routes | src/routes/user.ts | 2 | 2 |
+
+| #   | Task               | Files                | Deps | Batch |
+| --- | ------------------ | -------------------- | ---- | ----- |
+| 1   | Create user schema | prisma/schema.prisma | -    | 1     |
+| 2   | Add user service   | src/services/user.ts | 1    | 1     |
+| 3   | Create user routes | src/routes/user.ts   | 2    | 2     |
+
 <!-- EXECUTION_TASKS_END -->
 ```
 
 **Checkpoint after each section:**
+
 ```
 [Continue] [Revise section] [Back to Approaches] [Abandon]
 ```
@@ -211,20 +230,23 @@ Section-by-section drafting with approval after each section.
 ## Phase 5: Review (default ON, skip with --skip-review)
 
 **Reviewer selection via AskUserQuestion:**
+
 ```
 Who should review this plan?
 [Klaus (opinionated devil's advocate)] [Skip review] [Both perspectives]
 ```
 
 **If Klaus selected:**
+
 ```typescript
 Task(klaus, {
   prompt: "Review this plan for ${task}. Be brutally honest about weaknesses.",
-  context: "fork"
-})
+  context: "fork",
+});
 ```
 
 **Review criteria:**
+
 - Are requirements clear and complete?
 - Is scope well-bounded?
 - Are success criteria measurable?
@@ -233,17 +255,19 @@ Task(klaus, {
 - Are risks identified?
 
 **Checkpoint:**
+
 ```
 [Iterate on feedback] [Finalise plan] [Back to Draft] [Abandon]
 ```
 
 ## Output
 
-Save plan to specified path (default: `.claude/plansclaudikins-kernel:plan-${session_id}.md`)
+Save plan to specified path (default: `.claude/plans/plan-${session_id}.md`)
 
 Include machine-readable task markers for claudikins-kernel:execute compatibility.
 
 **Final message:**
+
 ```
 Done! Plan saved to [path]
 
@@ -253,20 +277,21 @@ When you're ready:
 
 ## Flag Behaviours
 
-| Flag | Effect |
-|------|--------|
+| Flag              | Effect                       |
+| ----------------- | ---------------------------- |
 | `--skip-research` | Jump from Phase 1 to Phase 3 |
-| `--skip-review` | Jump from Phase 4 to Output |
-| `--fast-mode` | 60-second iteration cycles |
-| `--session-id ID` | Resume previous session |
-| `--timing` | Show phase durations |
-| `--list-sessions` | Show available sessions |
-| `--output PATH` | Custom output location |
-| `--verify` | Run verification anytime |
+| `--skip-review`   | Jump from Phase 4 to Output  |
+| `--fast-mode`     | 60-second iteration cycles   |
+| `--session-id ID` | Resume previous session      |
+| `--timing`        | Show phase durations         |
+| `--list-sessions` | Show available sessions      |
+| `--output PATH`   | Custom output location       |
+| `--verify`        | Run verification anytime     |
 
 ## Error Recovery
 
 On any phase failure:
+
 1. Save current state to plan-state.json
 2. Log error to `.claude/errors/`
 3. Offer: [Retry] [Skip phase] [Manual intervention] [Abandon]
@@ -274,6 +299,7 @@ On any phase failure:
 ## Context Collapse Handling
 
 On PreCompact event:
+
 1. preserve-state.sh saves critical state
 2. Mark session as "interrupted" (not abandoned)
 3. Resume instructions written to state file

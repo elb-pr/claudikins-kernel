@@ -54,7 +54,7 @@ fi
 
 # Validate we have a plan path
 if [ -z "$PLAN_PATH" ]; then
-    echo "No plan file specified and no recent plan found. Run claudikins-kernel:plan first or specify a plan path." >&2
+    echo "No plan file specified and no recent plan found. Run claudikins-kernel:plans first or specify a plan path." >&2
     exit 2
 fi
 
@@ -82,7 +82,7 @@ if [ "$HAS_START" -eq 0 ] || [ "$HAS_END" -eq 0 ]; then
     echo "  | 1 | ... | ... | ... | ... |" >&2
     echo "  <!-- EXECUTION_TASKS_END -->" >&2
     echo "" >&2
-    echo "Re-run claudikins-kernel:plan to generate a properly formatted plan." >&2
+    echo "Re-run claudikins-kernel:plans to generate a properly formatted plan." >&2
     exit 2
 fi
 
@@ -91,14 +91,14 @@ START_LINE=$(grep -n '<!-- EXECUTION_TASKS_START -->' "$PLAN_PATH" | head -1 | c
 END_LINE=$(grep -n '<!-- EXECUTION_TASKS_END -->' "$PLAN_PATH" | head -1 | cut -d: -f1)
 
 if [ "$START_LINE" -ge "$END_LINE" ]; then
-    echo "EXECUTION_TASKS markers are malformed (END before START). Re-run claudikins-kernel:plan." >&2
+    echo "EXECUTION_TASKS markers are malformed (END before START). Re-run claudikins-kernel:plans." >&2
     exit 2
 fi
 
 # Check there's content between markers
 TASK_LINES=$((END_LINE - START_LINE - 1))
 if [ "$TASK_LINES" -lt 3 ]; then
-    echo "EXECUTION_TASKS section appears empty (need at least header + separator + 1 task). Re-run claudikins-kernel:plan." >&2
+    echo "EXECUTION_TASKS section appears empty (need at least header + separator + 1 task). Re-run claudikins-kernel:plans." >&2
     exit 2
 fi
 

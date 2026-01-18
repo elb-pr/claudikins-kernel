@@ -33,12 +33,12 @@ Never claim code works without seeing it work. Tests passing is not enough. Clau
 
 Run the automated checks first. Fast feedback.
 
-| Check | Command Pattern | What It Catches |
-|-------|-----------------|-----------------|
-| Tests | `npm test` / `pytest` / `cargo test` | Logic errors, regressions |
-| Lint | `npm run lint` / `ruff` / `clippy` | Style issues, common bugs |
-| Types | `tsc` / `mypy` / `cargo check` | Type mismatches, interface drift |
-| Build | `npm run build` / `cargo build` | Compilation errors, bundling issues |
+| Check | Command Pattern                      | What It Catches                     |
+| ----- | ------------------------------------ | ----------------------------------- |
+| Tests | `npm test` / `pytest` / `cargo test` | Logic errors, regressions           |
+| Lint  | `npm run lint` / `ruff` / `clippy`   | Style issues, common bugs           |
+| Types | `tsc` / `mypy` / `cargo check`       | Type mismatches, interface drift    |
+| Build | `npm run build` / `cargo build`      | Compilation errors, bundling issues |
 
 **Flaky Test Detection (C-12):**
 
@@ -56,13 +56,13 @@ Test fails?
 
 This is the feedback loop that makes Claude's code actually work.
 
-| Project Type | Verification Method | Evidence |
-|--------------|---------------------|----------|
-| Web app | Start server, screenshot, test flows | Screenshots, console logs |
-| API | Curl endpoints, check responses | Status codes, response bodies |
-| CLI | Run commands, capture output | stdout, stderr, exit codes |
-| Library | Run examples, check results | Output values, test coverage |
-| Service | Check logs, verify health endpoint | Log patterns, health responses |
+| Project Type | Verification Method                  | Evidence                       |
+| ------------ | ------------------------------------ | ------------------------------ |
+| Web app      | Start server, screenshot, test flows | Screenshots, console logs      |
+| API          | Curl endpoints, check responses      | Status codes, response bodies  |
+| CLI          | Run commands, capture output         | stdout, stderr, exit codes     |
+| Library      | Run examples, check results          | Output values, test coverage   |
+| Service      | Check logs, verify health endpoint   | Log patterns, health responses |
 
 **Fallback Hierarchy (A-3):**
 
@@ -81,10 +81,12 @@ If primary method unavailable, fall back:
 After verification passes, optionally run cynic for polish.
 
 **Prerequisites:**
+
 - Phase 2 (catastrophiser) must PASS
 - Human approves: "Run cynic for polish pass?"
 
 **cynic Rules:**
+
 - Preserve exact behaviour (tests MUST still pass)
 - Remove unnecessary abstraction
 - Improve naming clarity
@@ -92,6 +94,7 @@ After verification passes, optionally run cynic for polish.
 - Flatten nested conditionals
 
 **If tests fail after simplification:**
+
 - Log failure reasons
 - Show human
 - Proceed anyway (A-5) with caveat
@@ -137,16 +140,16 @@ Human decides. If approved, set `unlock_ship = true`.
 
 Agents under pressure find excuses. These are all violations:
 
-| Excuse | Reality |
-|--------|---------|
-| "Tests pass, that's good enough" | Tests aren't enough. SEE it working. Screenshots, curl, output. |
-| "I'll verify after shipping" | Verify BEFORE ship. That's the whole point. |
-| "The type checker caught everything" | Types don't catch runtime issues. Get evidence. |
-| "Screenshot failed but it probably works" | "Probably" isn't evidence. Fix the screenshot or use fallback. |
-| "Human checkpoint is just a formality" | Human checkpoint is the gate. No auto-shipping. |
-| "Code review is enough for this change" | Code review is last resort fallback. Try harder. |
+| Excuse                                     | Reality                                                               |
+| ------------------------------------------ | --------------------------------------------------------------------- |
+| "Tests pass, that's good enough"           | Tests aren't enough. SEE it working. Screenshots, curl, output.       |
+| "I'll verify after shipping"               | Verify BEFORE ship. That's the whole point.                           |
+| "The type checker caught everything"       | Types don't catch runtime issues. Get evidence.                       |
+| "Screenshot failed but it probably works"  | "Probably" isn't evidence. Fix the screenshot or use fallback.        |
+| "Human checkpoint is just a formality"     | Human checkpoint is the gate. No auto-shipping.                       |
+| "Code review is enough for this change"    | Code review is last resort fallback. Try harder.                      |
 | "Tests are flaky, I'll ignore the failure" | Flaky tests hide real failures. Fix or explicitly accept with caveat. |
-| "Exit code 2 is too strict" | Exit code 2 exists to block bad ships. Pass properly. |
+| "Exit code 2 is too strict"                | Exit code 2 exists to block bad ships. Pass properly.                 |
 
 **All of these mean: Get evidence. Human decides. No shortcuts.**
 
@@ -205,14 +208,14 @@ if [ ! -f "$EXECUTE_STATE" ]; then
 fi
 ```
 
-This enforces the claudikins-kernel:plan → claudikins-kernel:execute → claudikins-kernel:verify → claudikins-kernel:ship flow.
+This enforces the claudikins-kernel:plans → claudikins-kernel:execute → claudikins-kernel:verify → claudikins-kernel:ship flow.
 
 ## Agent Integration
 
-| Agent | Role | When |
-|-------|------|------|
-| catastrophiser | See code working | Phase 2: Output verification |
-| cynic | Polish pass | Phase 3: Simplification (optional) |
+| Agent          | Role             | When                               |
+| -------------- | ---------------- | ---------------------------------- |
+| catastrophiser | See code working | Phase 2: Output verification       |
+| cynic          | Polish pass      | Phase 3: Simplification (optional) |
 
 Both agents run with `context: fork` and `background: true`.
 
@@ -258,14 +261,14 @@ See [agent-integration.md](references/agent-integration.md) for coordination pat
 
 ## Edge Case Handling
 
-| Situation | Reference |
-|-----------|-----------|
-| Tests hang or timeout | [test-timeout-handling.md](references/test-timeout-handling.md) |
-| Auto-fix breaks code | [lint-fix-validation.md](references/lint-fix-validation.md) |
+| Situation                  | Reference                                                                     |
+| -------------------------- | ----------------------------------------------------------------------------- |
+| Tests hang or timeout      | [test-timeout-handling.md](references/test-timeout-handling.md)               |
+| Auto-fix breaks code       | [lint-fix-validation.md](references/lint-fix-validation.md)                   |
 | Primary verification fails | [verification-method-fallback.md](references/verification-method-fallback.md) |
-| Type-check results unclear | [type-check-confidence.md](references/type-check-confidence.md) |
-| cynic breaks tests | [cynic-rollback.md](references/cynic-rollback.md) |
-| Large project state | [verify-state-compression.md](references/verify-state-compression.md) |
+| Type-check results unclear | [type-check-confidence.md](references/type-check-confidence.md)               |
+| cynic breaks tests         | [cynic-rollback.md](references/cynic-rollback.md)                             |
+| Large project state        | [verify-state-compression.md](references/verify-state-compression.md)         |
 
 ## References
 
