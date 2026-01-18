@@ -19,7 +19,20 @@ A structured workflow plugin for Claude Code that enforces quality through human
 # Install the plugin
 /plugin install claudikins-kernel
 ```
+### System Requirements
 
+- `jq` - Command-line JSON processor (used by hook scripts)
+  ```bash
+  # Ubuntu/Debian
+  sudo apt install jq
+
+  # macOS
+  brew install jq
+
+  # Windows (via scoop)
+  scoop install jq
+  ```
+  
 Restart Claude Code. Done.
 
 
@@ -236,23 +249,6 @@ Same principles, different scale. The goal is reliability through structure - no
   scoop install jq
   ```
 
-### Plugin Installation
-
-```bash
-# Clone into your Claude Code plugins directory
-git clone https://github.com/elb-pr/claudikins-kernel ~/.claude/plugins/claudikins-kernel
-```
-
----
-
-# Add the Claudikins marketplace
-/marketplace add elb-pr/claudikins-marketplace
-
-# Install the plugin
-/plugin install claudikins-tool-executor
-Restart Claude Code. Done.
-
----
 
 ## Status
 
