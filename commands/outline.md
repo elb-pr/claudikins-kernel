@@ -8,14 +8,14 @@ status: stable
 version: "1.0.1"
 merge_strategy: none
 flags:
-  --session-id: Resume previous session by ID
-  --skip-research: Skip Phase 2 research
-  --skip-review: Skip Phase 5 review
-  --fast-mode: 60-second iteration cycles
-  --timing: Show phase durations for velocity tracking
-  --list-sessions: Show available sessions for resume
-  --output: Plan destination path
-  --run-verify: Run verification anytime
+  --session-id → Resume previous session by ID
+  --skip-research → Skip Phase 2 research
+  --skip-review → Skip Phase 5 review
+  --fast-mode → 60-second iteration cycles
+  --timing → Show phase durations for velocity tracking
+  --list-sessions → Show available sessions for resume
+  --output → Plan destination path
+  --run-verify → Run verification anytime
 agent_outputs:
   - agent: taxonomy-extremist
     capture_to: .claude/agent-outputs/research/
