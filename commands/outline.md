@@ -24,6 +24,7 @@ allowed-tools:
   - Read
   - Grep
   - Glob
+  - Bash
   - Task
   - AskUserQuestion
   - TodoWrite
