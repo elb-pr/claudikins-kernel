@@ -1,5 +1,5 @@
 ---
-name: outline
+name: claudikins-kernel:outline
 description: Iterative planning with human checkpoints at every phase
 argument-hint: [--session-id ID] [--skip-research] [--skip-review] [--fast-mode]
 model: opus
