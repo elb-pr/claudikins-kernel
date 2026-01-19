@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/banner.png" alt="Claudikins Kernel - Plan, Execute, Verify, Ship">
+  <img src="assets/banner.png" alt="Claudikins Kernel - Outline, Execute, Verify, Ship">
 </p>
 
 <p align="center">
@@ -17,13 +17,6 @@
 ---
 
 ## Why?
-
-AI agents are powerful. They're also prone to:
-
-- Hallucinating features you didn't ask for
-- Skipping verification because "the code looks right"
-- Shipping untested changes to main
-- Refactoring half your codebase when you asked for a bug fix
 
 **You asked for a bug fix. It refactored half your codebase.**
 
