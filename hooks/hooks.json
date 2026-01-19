@@ -155,7 +155,7 @@
         "hooks": [
           {
             "type": "prompt",
-            "prompt": "Evaluate if the babyclaude task implementation is complete. Check: 1) All acceptance criteria addressed, 2) Code compiles/passes lint, 3) Tests pass if applicable, 4) No incomplete TODOs. Return {\"decision\": \"allow\"} if complete, {\"decision\": \"block\", \"reason\": \"...\"} if work remains.",
+            "prompt": "Evaluate if the babyclaude task implementation is complete. Check: 1) All acceptance criteria addressed, 2) Code compiles/passes lint, 3) Tests pass if applicable, 4) No incomplete TODOs. Return {\"ok\": true} if complete, {\"ok\": false, \"reason\": \"...\"} if work remains.",
             "model": "haiku",
             "timeout": 30
           }

@@ -1,6 +1,6 @@
 {
   "name": "claudikins-kernel",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Core planning and workflow infrastructure for the Claudikins ecosystem",
   "author": {
     "name": "Ethan Lee-Brennan",
