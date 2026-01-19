@@ -4,7 +4,7 @@ description: Post-execution verification gate. Tests, lint, type-check, then see
 argument-hint: [--branch NAME] [--scope SCOPE] [--skip-simplify] [--fix-lint]
 model: opus
 status: stable
-version: "1.1.0"
+version: "1.1.1"
 agent_outputs:
   - agent: catastrophiser
     capture_to: .claude/agent-outputs/verification/

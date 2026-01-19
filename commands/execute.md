@@ -4,7 +4,7 @@ description: Execute validated plans with isolated agents and two-stage review
 argument-hint: [plan-path or --resume or --status]
 model: opus
 status: stable
-version: "1.1.0"
+version: "1.1.1"
 agent_outputs:
   - agent: babyclaude
     capture_to: .claude/task-outputs/

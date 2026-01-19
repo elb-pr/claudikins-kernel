@@ -4,7 +4,7 @@ description: Iterative planning with human checkpoints at every phase
 argument-hint: [--session-id ID] [--skip-research] [--skip-review] [--fast-mode]
 model: opus
 status: stable
-version: "1.1.0"
+version: "1.1.1"
 agent_outputs:
   - agent: taxonomy-extremist
     capture_to: .claude/agent-outputs/research/

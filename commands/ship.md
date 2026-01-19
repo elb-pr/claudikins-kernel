@@ -4,7 +4,7 @@ description: Final shipping gate. PR creation, documentation updates, and merge 
 argument-hint: [--branch NAME] [--target BRANCH] [--skip-docs] [--squash|--preserve] [--dry-run]
 model: opus
 status: stable
-version: "1.1.0"
+version: "1.1.1"
 agent_outputs:
   - agent: git-perfectionist
     capture_to: .claude/agent-outputs/documentation/
