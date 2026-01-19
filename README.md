@@ -18,7 +18,9 @@
 
 ## Why?
 
-**You asked for a bug fix. It refactored half your codebase.**
+**You asked Claude for a bug fix. He refactored half your codebase.**
+**You asked Claude for a feature. He placed a bunch of stubs that look a little bit real.**
+**You asked Claude if you should drink that coffee you forgot about, now you're sick. Maybe that one was just me, but the point stands!**
 
 Sound familiar?
 
