@@ -8,7 +8,7 @@
   <img src="https://img.shields.io/badge/workflow-SRE_enforced-green.svg" alt="Workflow: SRE Enforced">
 </p>
 
-<h1 align="center">claudikins-kernel</h1>
+<h1 align="center">Claudikins Kernel</h1>
 
 <p align="center"><strong>Industrial-grade guardrails for Claude Code.</strong></p>
 
