@@ -12,7 +12,7 @@
 
 <p align="center"><strong>Industrial-grade guardrails for Claude Code.</strong></p>
 
-<p align="center"><em>A disciplined workflow engine run by a team of neurotic AI agents.<br>Don't ship until the Cynic says it's clean.</em></p>
+<p align="center"><em>A disciplined workflow engine run by a team of neurotic AI agents.<br>We call it Claudikins because "Draconian-AI-Supervisor" was taken.</em></p>
 
 ---
 
