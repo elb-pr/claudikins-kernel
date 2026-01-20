@@ -99,19 +99,11 @@ jq --arg checkpointId "$CHECKPOINT_ID" \
 find "$CHECKPOINTS_DIR" -name "checkpoint-*.json" -mmin +1 -type f 2>/dev/null | \
     sort -r | tail -n +6 | xargs -r rm -f
 
-# Build resume message
-if [ "$IN_PROGRESS_TASKS" -gt 0 ]; then
-    RESUME_MSG="Execution paused with $IN_PROGRESS_TASKS task(s) in progress. Run claudikins-kernel:execute --resume to continue."
-else
-    RESUME_MSG="Checkpoint saved at batch $CURRENT_BATCH. Run claudikins-kernel:execute --resume to continue."
-fi
+# Build resume message - user only sees this instruction
+RESUME_MSG="Run claudikins-kernel:execute --resume to continue."
 
-# Output checkpoint notification (Stop hooks use stopReason, not hookSpecificOutput)
-cat <<EOF
-{
-  "continue": false,
-  "stopReason": "CHECKPOINT SAVED\\n\\nCheckpoint: ${CHECKPOINT_ID}\\nBatch: ${CURRENT_BATCH}\\nCompleted: ${COMPLETED_TASKS}/${TOTAL_TASKS} tasks\\n\\n${RESUME_MSG}"
-}
-EOF
+# Output Stop hook JSON using jq for proper escaping
+# Stop hooks: {"continue": false, "stopReason": "..."} allows stopping with message
+jq -n --arg reason "$RESUME_MSG" '{"continue": false, "stopReason": $reason}'
 
 exit 0
