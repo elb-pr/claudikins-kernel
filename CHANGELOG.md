@@ -7,10 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.1.3] - 2026-01-20
 
-### Fixed
+### Changed
 
-- `batch-checkpoint-gate.sh`: use `stopReason` field instead of invalid `hookSpecificOutput` JSON (Stop hooks don't support `hookSpecificOutput`, only `continue`, `stopReason`, `suppressOutput`)
-- `batch-checkpoint-gate.sh`: use `jq` for proper JSON escaping to fix "JSON validation failed" error, simplified output to show only resume instruction
+- `batch-checkpoint-gate.sh`: improved checkpoint message formatting with proper newline handling via jq
 
 ---
 
