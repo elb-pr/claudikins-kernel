@@ -12,7 +12,7 @@
 
 <p align="center"><strong>We call it Claudikins because "Draconian-AI-Supervisor" was taken.</strong></p>
 
-<p align="center"><em>A disciplined workflow engine run by a team of neurotic AI agents.<br>
+<p align="center"><em>A disciplined workflow engine run by a team of neurotic AI agents.</em></p>
 
 ---
 
