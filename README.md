@@ -22,9 +22,8 @@
 
 **You asked Claude for a feature. He placed a bunch of stubs that look a little bit real.**
 
-**You asked Claude if you should drink that coffee you forgot about, now you're feeling sick and threw up on your keyboard, a keyboard which cost too much money just to hear nice click clack noises whilst you code,
-which actually isn't that great because it wakes your dog up at night and then you have to take him out in the cold whilst you still feel sick and well
-...okay, maybe that one was just me, but the point still stands!**
+**You asked Claude if you should drink that coffee you forgot about, now you're feeling sick and threw up on your keyboard, a keyboard which cost too much just to hear nice click clack noises whilst you code,
+which actually isn't that great because it wakes your dog up at night, then you have to take him out in the cold whilst you're still sick and well...okay, maybe that one was just me, but the point still stands**
 
 claudikins-kernel applies SRE discipline to AI workflows. It enforces a strict 4-stage pipeline with **gates between each step**. You literally cannot skip verification. You cannot ship without the Cynic's approval.
 
