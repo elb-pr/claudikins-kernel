@@ -43,12 +43,10 @@ output_success() {
             ;;
     esac
 
+    # PreCompact events don't support hookSpecificOutput — use systemMessage instead
     cat <<EOF
 {
-  "hookSpecificOutput": {
-    "hookEventName": "PreCompact",
-    "additionalContext": "Plan session interrupted and state preserved. Session: ${session_id}. To resume after context compaction: ${resume_cmd}"
-  }
+  "systemMessage": "Plan session interrupted and state preserved. Session: ${session_id}. To resume after context compaction: ${resume_cmd}"
 }
 EOF
     exit 0

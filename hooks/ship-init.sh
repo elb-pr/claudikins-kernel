@@ -112,16 +112,10 @@ echo ""
 echo "Gate check: PASSED"
 echo "Code integrity: VERIFIED"
 
-# Output JSON for Claude
+# Output valid hook JSON for Claude
 cat << EOF
 {
-  "hook": "ship-init",
-  "status": "success",
-  "session_id": "$SESSION_ID",
-  "verify_session_id": "$VERIFY_SESSION",
-  "verified_commit": "$VERIFY_COMMIT",
-  "gate_check": "passed",
-  "code_integrity": "verified"
+  "systemMessage": "Ship session initialized. Session: $SESSION_ID, Verify session: $VERIFY_SESSION, Verified commit: $VERIFY_COMMIT, Gate: passed, Integrity: verified"
 }
 EOF
 

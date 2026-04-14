@@ -86,15 +86,10 @@ echo "Target: $TARGET"
 echo "Status: SHIPPED"
 echo ""
 
-# Output JSON for Claude
+# Output valid Stop hook JSON for Claude
 cat << EOF
 {
-  "hook": "ship-complete",
-  "status": "success",
-  "session_id": "$SESSION_ID",
-  "pr_number": "$PR_NUMBER",
-  "target": "$TARGET",
-  "shipped": true
+  "systemMessage": "Ship complete. Session: $SESSION_ID, PR: #$PR_NUMBER, Target: $TARGET, Status: SHIPPED"
 }
 EOF
 

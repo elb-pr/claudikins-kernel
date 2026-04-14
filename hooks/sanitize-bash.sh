@@ -27,7 +27,14 @@ if [[ "$COMMAND" =~ ^git[[:space:]]+commit && ! "$COMMAND" =~ --no-edit ]]; then
     # Don't modify if it already has -m (message provided)
     if [[ ! "$COMMAND" =~ -m[[:space:]] ]]; then
         SANITIZED="${COMMAND} --no-edit"
-        echo "{\"decision\": \"allow\", \"updatedInput\": {\"command\": \"$SANITIZED\"}}"
+        # updatedInput must be inside hookSpecificOutput for PreToolUse events
+        jq -n --arg cmd "$SANITIZED" '{
+          "decision": "approve",
+          "hookSpecificOutput": {
+            "hookEventName": "PreToolUse",
+            "updatedInput": {"command": $cmd}
+          }
+        }'
         exit 0
     fi
 fi

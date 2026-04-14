@@ -119,11 +119,9 @@ Run claudikins-kernel:execute --resume to continue.
 EOM
 
 # Output checkpoint notification using jq for proper JSON escaping
+# Stop events don't support hookSpecificOutput — use systemMessage instead
 jq -n --arg msg "$DISPLAY_MSG" '{
-  "hookSpecificOutput": {
-    "hookEventName": "Stop",
-    "additionalContext": $msg
-  }
+  "systemMessage": $msg
 }'
 
 exit 0

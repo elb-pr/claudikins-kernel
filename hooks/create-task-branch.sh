@@ -85,14 +85,10 @@ if GIT_OUTPUT=$(git worktree add "$WORKTREE_PATH" "$BRANCH_NAME" 2>&1); then
            "$STATE_FILE" > "${STATE_FILE}.tmp" && mv "${STATE_FILE}.tmp" "$STATE_FILE"
     fi
 
-    # Output context for babyclaude with worktree path
-    # The orchestrator should use this path as cwd when spawning babyclaude
+    # SubagentStart events don't support hookSpecificOutput — use systemMessage instead
     cat <<EOF
 {
-  "hookSpecificOutput": {
-    "hookEventName": "SubagentStart",
-    "additionalContext": "WORKTREE_PATH: ${WORKTREE_PATH}\nBRANCH: ${BRANCH_NAME}\n\nYou are working in an isolated worktree. All your file operations happen in: ${WORKTREE_PATH}\n\nDo NOT use git commands - the orchestrator handles all git operations."
-  }
+  "systemMessage": "WORKTREE_PATH: ${WORKTREE_PATH}\nBRANCH: ${BRANCH_NAME}\n\nYou are working in an isolated worktree. All your file operations happen in: ${WORKTREE_PATH}\n\nDo NOT use git commands - the orchestrator handles all git operations."
 }
 EOF
     exit 0
