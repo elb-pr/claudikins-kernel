@@ -1,7 +1,7 @@
 ---
 name: claudikins-kernel:execute
 description: Execute validated plans with isolated agents and two-stage review
-argument-hint: <plan-path> | --resume | --status
+argument-hint: <plan-path> | --resume | --status [--model opus|sonnet]
 model: opus
 agent_outputs:
   - agent: babyclaude
@@ -68,6 +68,7 @@ You are orchestrating a task execution workflow with isolated agents and human c
 | `--status`      | Show current execution status                       |
 | `--abort`       | Abort current execution (saves checkpoint)          |
 | `--batch N`     | Override batch size (default: from plan)            |
+| `--model M`     | Model for agents: `opus` or `sonnet` (default: opus)|
 | `--skip-review` | Skip code review (spec review still runs)           |
 | `--dry-run`     | Parse plan and show execution order without running |
 | `--timing`      | Show task and batch durations                       |
@@ -131,7 +132,25 @@ Check for flags first:
 --resume → Load checkpoint, resume from saved state
 --abort → Save checkpoint, mark aborted, exit
 --dry-run → Parse and display, don't execute
+--model → Set agent model (opus|sonnet), stored in execute-state.json
 ```
+
+### Model Selection
+
+If `--model` flag is provided, use the specified model. Otherwise, prompt the user:
+
+```
+AskUserQuestion({
+  question: "Which model should agents use for this execution?",
+  header: "Model Selection",
+  options: [
+    { label: "Opus", description: "Most capable — best for complex tasks (uses more session quota)" },
+    { label: "Sonnet", description: "Fast and capable — good for straightforward tasks (lighter on quota)" }
+  ]
+})
+```
+
+Store the selected model in `execute-state.json` as `"model": "opus"|"sonnet"`. All `Task()` calls for babyclaude, spec-reviewer, and code-reviewer must use this value.
 
 ### Plan Loading
 
