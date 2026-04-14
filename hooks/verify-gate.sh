@@ -42,14 +42,13 @@ if [ ! -f "$VERIFY_STATE" ]; then
     exit 0
 fi
 
-# === File Locking (C-8) ===
-LOCK_FILE="${VERIFY_STATE}.lock"
-exec 200>"$LOCK_FILE"
-if ! flock -n 200; then
+# === File Locking (C-8) — portable (works on macOS + Linux) ===
+LOCK_DIR="${VERIFY_STATE}.lock"
+if ! mkdir "$LOCK_DIR" 2>/dev/null; then
     echo "ERROR: Another process is modifying verify state" >&2
     exit 2
 fi
-trap 'flock -u 200; rm -f "$LOCK_FILE"' EXIT
+trap 'rmdir "$LOCK_DIR" 2>/dev/null' EXIT
 
 # === State File Corruption Check (H-4) ===
 if ! jq empty "$VERIFY_STATE" 2>/dev/null; then
@@ -135,7 +134,7 @@ COMMIT_SHA=$(git rev-parse HEAD 2>/dev/null || echo "unknown")
 
 # === Atomic Write Pattern (C-9) ===
 TEMP_FILE=$(mktemp "${VERIFY_STATE}.XXXXXX")
-trap "rm -f '$TEMP_FILE'; flock -u 200; rm -f '$LOCK_FILE'" EXIT
+trap "rm -f '$TEMP_FILE'; rmdir '$LOCK_DIR' 2>/dev/null" EXIT
 
 TIMESTAMP=$(date -Iseconds)
 

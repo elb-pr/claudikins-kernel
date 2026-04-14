@@ -13,14 +13,13 @@ CLAUDE_DIR="$PROJECT_DIR/.claude"
 STATE_FILE="$CLAUDE_DIR/execute-state.json"
 TRACE_FILE="$CLAUDE_DIR/execute-trace.json"
 
-# === File Locking (C-8) ===
-LOCK_FILE="${STATE_FILE}.lock"
-exec 200>"$LOCK_FILE"
-if ! flock -n 200; then
+# === File Locking (C-8) — portable (works on macOS + Linux) ===
+LOCK_DIR="${STATE_FILE}.lock"
+if ! mkdir "$LOCK_DIR" 2>/dev/null; then
     echo "execute-tracker: Another process is modifying state, skipping" >&2
     exit 0  # Don't block, just skip this update
 fi
-trap 'flock -u 200; rm -f "$LOCK_FILE"' EXIT
+trap 'rmdir "$LOCK_DIR" 2>/dev/null' EXIT
 
 # Read input JSON from stdin
 INPUT=$(cat)
