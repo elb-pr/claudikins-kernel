@@ -51,28 +51,48 @@ if [ ! -f "$TRACE_FILE" ]; then
     echo '{"spans": [], "tool_calls": []}' > "$TRACE_FILE"
 fi
 
-# Record tool call for tracing
-if ! jq --arg task "$CURRENT_TASK" \
+# Record tool call for tracing (same atomicity bug fix as below — never mv
+# an empty/invalid jq output over the real file).
+if jq --arg task "$CURRENT_TASK" \
    --arg tool "$TOOL_NAME" \
    --arg time "$TIMESTAMP" \
    --arg result "${TOOL_RESULT:0:200}" \
    '.tool_calls += [{"task_id": $task, "tool": $tool, "timestamp": $time, "result_preview": $result}]' \
-   "$TRACE_FILE" > "${TRACE_FILE}.tmp" 2>&1; then
+   "$TRACE_FILE" > "${TRACE_FILE}.tmp" 2>/dev/null; then
+    if [ -s "${TRACE_FILE}.tmp" ] && jq -e . "${TRACE_FILE}.tmp" >/dev/null 2>&1; then
+        mv "${TRACE_FILE}.tmp" "$TRACE_FILE"
+    else
+        rm -f "${TRACE_FILE}.tmp"
+    fi
+else
     echo "execute-tracker: WARNING - trace file update failed" >&2
+    rm -f "${TRACE_FILE}.tmp"
 fi
-mv "${TRACE_FILE}.tmp" "$TRACE_FILE" 2>/dev/null || true
 
 # Update task stats in state file
-# Increment tool call count
-if ! jq --arg taskId "$CURRENT_TASK" \
+# Increment tool call count.
+# CRITICAL: the mv MUST be inside the success branch. Original code had the
+# mv outside the `if ! jq ... ; then`, which meant a transient jq failure
+# would leave an empty .tmp file that then got mv'd over the real state file,
+# silently truncating state to 0 bytes — destroying current_task and
+# worktree_path mid-task.
+if jq --arg taskId "$CURRENT_TASK" \
    --arg tool "$TOOL_NAME" \
    '(.tasks[] | select(.id == $taskId)).tool_calls += 1 |
     (.tasks[] | select(.id == $taskId)).last_tool = $tool |
     (.tasks[] | select(.id == $taskId)).last_activity = now' \
-   "$STATE_FILE" > "${STATE_FILE}.tmp" 2>&1; then
+   "$STATE_FILE" > "${STATE_FILE}.tmp" 2>/dev/null; then
+    # Sanity-check the output is non-empty AND valid JSON before clobbering state.
+    if [ -s "${STATE_FILE}.tmp" ] && jq -e . "${STATE_FILE}.tmp" >/dev/null 2>&1; then
+        mv "${STATE_FILE}.tmp" "$STATE_FILE"
+    else
+        echo "execute-tracker: WARNING - jq produced empty/invalid output, skipping mv" >&2
+        rm -f "${STATE_FILE}.tmp"
+    fi
+else
     echo "execute-tracker: WARNING - state file update failed" >&2
+    rm -f "${STATE_FILE}.tmp"
 fi
-mv "${STATE_FILE}.tmp" "$STATE_FILE" 2>/dev/null || true
 
 # --- Stuck Detection ---
 
@@ -103,14 +123,21 @@ if [ "$TOTAL_RECENT" -ge 15 ] && [ "$FILE_CHANGING_TOOLS" -eq 0 ]; then
     STUCK_SCORE=$((STUCK_SCORE + 50))
 fi
 
-# Update stuck score in state
-if ! jq --arg taskId "$CURRENT_TASK" \
+# Update stuck score in state (same atomicity bug pattern as above)
+if jq --arg taskId "$CURRENT_TASK" \
    --argjson score "$STUCK_SCORE" \
    '(.tasks[] | select(.id == $taskId)).stuck_score = $score' \
-   "$STATE_FILE" > "${STATE_FILE}.tmp" 2>&1; then
+   "$STATE_FILE" > "${STATE_FILE}.tmp" 2>/dev/null; then
+    if [ -s "${STATE_FILE}.tmp" ] && jq -e . "${STATE_FILE}.tmp" >/dev/null 2>&1; then
+        mv "${STATE_FILE}.tmp" "$STATE_FILE"
+    else
+        echo "execute-tracker: WARNING - jq produced empty/invalid output for stuck-score, skipping mv" >&2
+        rm -f "${STATE_FILE}.tmp"
+    fi
+else
     echo "execute-tracker: WARNING - stuck score update failed" >&2
+    rm -f "${STATE_FILE}.tmp"
 fi
-mv "${STATE_FILE}.tmp" "$STATE_FILE" 2>/dev/null || true
 
 # Output warning if stuck score is high (but don't block)
 if [ "$STUCK_SCORE" -ge 60 ]; then

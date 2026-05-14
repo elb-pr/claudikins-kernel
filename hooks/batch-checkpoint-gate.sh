@@ -38,11 +38,15 @@ CHECKPOINT_FILE="$CHECKPOINTS_DIR/${CHECKPOINT_ID}.json"
 TIMESTAMP=$(date -Iseconds)
 
 # Get current execution state
-CURRENT_BATCH=$(jq -r '.current_batch // 0' "$STATE_FILE" 2>/dev/null || echo "0")
-CURRENT_TASK=$(jq -r '.current_task // null' "$STATE_FILE" 2>/dev/null || echo "null")
+# Use `-c` (compact) instead of `-r` so the output stays JSON-encoded — string
+# task IDs need to remain quoted for the subsequent `--argjson` to accept them.
+# The original `jq -r '.current_task // null'` returned bare `probe2` (no quotes)
+# for string IDs, which is invalid JSON and broke checkpointing entirely.
+CURRENT_BATCH=$(jq -c '.current_batch // 0' "$STATE_FILE" 2>/dev/null || echo "0")
+CURRENT_TASK=$(jq -c '.current_task // null' "$STATE_FILE" 2>/dev/null || echo "null")
 SESSION_ID=$(jq -r '.session_id // "unknown"' "$STATE_FILE" 2>/dev/null || echo "unknown")
 
-# Count task statuses
+# Count task statuses (integers — -r is fine here)
 TOTAL_TASKS=$(jq -r '.tasks | length // 0' "$STATE_FILE" 2>/dev/null || echo "0")
 COMPLETED_TASKS=$(jq -r '[.tasks[] | select(.status == "completed")] | length // 0' "$STATE_FILE" 2>/dev/null || echo "0")
 IN_PROGRESS_TASKS=$(jq -r '[.tasks[] | select(.status == "in_progress")] | length // 0' "$STATE_FILE" 2>/dev/null || echo "0")

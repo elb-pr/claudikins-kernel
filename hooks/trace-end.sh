@@ -8,19 +8,33 @@ PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$(pwd)}"
 TRACES_DIR="${PROJECT_DIR}/.claude/traces"
 TRACE_FILE="${TRACES_DIR}/current-trace.json"
 
-# Read hook input
-HOOK_INPUT="${CLAUDE_HOOK_INPUT:-}"
+# Read hook input from stdin (documented ABI); fall back to env var for compat.
+if [[ -t 0 ]]; then
+    HOOK_INPUT="${CLAUDE_HOOK_INPUT:-}"
+else
+    HOOK_INPUT="$(cat)"
+    if [[ -z "$HOOK_INPUT" ]]; then
+        HOOK_INPUT="${CLAUDE_HOOK_INPUT:-}"
+    fi
+fi
 if [[ -z "$HOOK_INPUT" ]]; then
     exit 0
 fi
+
+# Diagnostic log
+DEBUG_LOG="/tmp/kernel-hooks.log"
+{
+    echo "=== $(date -u +%FT%TZ) trace-end.sh ==="
+    echo "$HOOK_INPUT" | jq -c '. | {hook_event_name, subagent_type, agentId, agent_id}' 2>/dev/null || echo "raw: $HOOK_INPUT"
+} >> "$DEBUG_LOG" 2>/dev/null || true
 
 # Check trace file exists
 if [[ ! -f "$TRACE_FILE" ]]; then
     exit 0
 fi
 
-# Extract agent info
-AGENT_ID=$(echo "$HOOK_INPUT" | jq -r '.agentId // "unknown"')
+# Extract agent info. Empirical ABI uses snake_case: `agent_id`.
+AGENT_ID=$(echo "$HOOK_INPUT" | jq -r '.agent_id // .agentId // "unknown"')
 TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 TIMESTAMP_MS=$(date +%s%3N)
 

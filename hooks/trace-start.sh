@@ -11,15 +11,33 @@ TRACE_FILE="${TRACES_DIR}/current-trace.json"
 # Ensure traces directory exists
 mkdir -p "$TRACES_DIR"
 
-# Read hook input
-HOOK_INPUT="${CLAUDE_HOOK_INPUT:-}"
+# Read hook input. Claude Code delivers hook input via stdin as JSON; the env-var
+# form (CLAUDE_HOOK_INPUT) is not part of the documented ABI, so prefer stdin and
+# fall back to the env var only if stdin is empty (for forward/backward compat).
+if [[ -t 0 ]]; then
+    HOOK_INPUT="${CLAUDE_HOOK_INPUT:-}"
+else
+    HOOK_INPUT="$(cat)"
+    if [[ -z "$HOOK_INPUT" ]]; then
+        HOOK_INPUT="${CLAUDE_HOOK_INPUT:-}"
+    fi
+fi
 if [[ -z "$HOOK_INPUT" ]]; then
     exit 0
 fi
 
-# Extract agent info
-AGENT_NAME=$(echo "$HOOK_INPUT" | jq -r '.agentType // "unknown"')
-AGENT_ID=$(echo "$HOOK_INPUT" | jq -r '.agentId // "unknown"')
+# Diagnostic log
+DEBUG_LOG="/tmp/kernel-hooks.log"
+{
+    echo "=== $(date -u +%FT%TZ) trace-start.sh ==="
+    echo "$HOOK_INPUT" | jq -c '. | {hook_event_name, subagent_type, agent_name, agentType, agentId}' 2>/dev/null || echo "raw: $HOOK_INPUT"
+} >> "$DEBUG_LOG" 2>/dev/null || true
+
+# Extract agent info. Empirical ABI: field is `agent_type` (snake_case),
+# plugin-namespaced (e.g. "claudikins-kernel:babyclaude").
+RAW_AGENT=$(echo "$HOOK_INPUT" | jq -r '.agent_type // .subagent_type // .agentType // .agent_name // "unknown"')
+AGENT_NAME="${RAW_AGENT##*:}"
+AGENT_ID=$(echo "$HOOK_INPUT" | jq -r '.agent_id // .agentId // "unknown"')
 TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
 # Get or create session ID

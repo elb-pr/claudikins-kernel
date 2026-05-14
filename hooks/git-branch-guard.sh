@@ -60,14 +60,55 @@ fi
 #   config     - Read config (--get, --list only)
 #   commit     - Commit staged changes
 
-# Extract the git subcommand
-GIT_SUBCOMMAND=$(echo "$COMMAND" | sed -n 's/.*git\s\+\([a-z-]\+\).*/\1/p')
+# Extract the git subcommand.
+# We want the subcommand of the FIRST git invocation in the command, and we
+# must skip git's global flags (-c key=value, -C path, --git-dir=, etc.) which
+# appear between `git` and the subcommand. The original regex `.*git\s+[a-z-]+`
+# was buggy in two ways: (1) `.*` is greedy and matched the LAST `git` in
+# `cmd && git foo`, and (2) `[a-z-]+` matches `-c`, so global flags were
+# mis-classified as subcommands.
+#
+# Use Perl regex (PCRE) for non-greedy + character-class precision.
+GIT_SUBCOMMAND=$(
+    echo "$COMMAND" \
+        | grep -oP '\bgit\b(?:\s+-[a-zA-Z]+(?:=\S+|\s+\S+))*\s+\K[a-z][a-z0-9-]*' \
+        | head -n1
+)
+# Fallback to the old extraction if PCRE didn't match (e.g. unusual quoting).
+if [ -z "$GIT_SUBCOMMAND" ]; then
+    GIT_SUBCOMMAND=$(echo "$COMMAND" | sed -n 's/.*git\s\+\([a-z-]\+\).*/\1/p')
+fi
 
 # Allowlist of safe git subcommands
 case "$GIT_SUBCOMMAND" in
-    add|status|diff|log|show|ls-files|check-ignore|rev-parse|symbolic-ref|commit)
-        # These are safe - allow them
+    add|status|diff|diff-index|diff-tree|log|show|ls-files|ls-tree|check-ignore|rev-parse|rev-list|symbolic-ref|for-each-ref|branch|commit|cat-file|describe|name-rev|reflog|stash)
+        # These are read-only inspection commands plus add/commit/branch (display only).
+        # `git branch` without flags lists branches; `git branch -d/-D` (delete) is
+        # still dangerous but the regex pattern `branch -d` is caught separately.
+        # `git stash` (no subcommand) lists stashes; mutating subcommands handled below.
+        if [ "$GIT_SUBCOMMAND" = "branch" ]; then
+            if echo "$COMMAND" | grep -qE 'git\s+(?:-\S+\s+)*branch\s+-[dDmM]'; then
+                echo "BLOCKED: git branch deletion/rename during task execution" >&2
+                exit 2
+            fi
+        fi
+        if [ "$GIT_SUBCOMMAND" = "stash" ]; then
+            if echo "$COMMAND" | grep -qE 'git\s+(?:-\S+\s+)*stash\s+(push|pop|apply|drop|clear|create|store|save)'; then
+                echo "BLOCKED: git stash mutation during task execution" >&2
+                exit 2
+            fi
+        fi
         exit 0
+        ;;
+    worktree)
+        # Only allow `git worktree list` (read-only). `add`, `remove`, `prune`,
+        # `move`, `repair`, `lock`, `unlock` all mutate worktree state.
+        if echo "$COMMAND" | grep -qE 'git\s+(?:-\S+\s+)*worktree\s+list'; then
+            exit 0
+        fi
+        echo "BLOCKED: git worktree mutation during task execution" >&2
+        echo "Only 'git worktree list' is allowed; worktree lifecycle is owned by the create-task-branch hook." >&2
+        exit 2
         ;;
     config)
         # git config is safe only for reading (--get, --list, --get-all, --get-regexp)

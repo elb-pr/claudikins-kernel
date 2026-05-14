@@ -74,12 +74,7 @@
             "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/hooks/trace-start.sh",
             "timeout": 10
-          }
-        ]
-      },
-      {
-        "matcher": "babyclaude",
-        "hooks": [
+          },
           {
             "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/hooks/create-task-branch.sh",
@@ -96,6 +91,11 @@
             "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/hooks/trace-end.sh",
             "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/task-completion-capture.sh",
+            "timeout": 30
           }
         ]
       }

@@ -18,10 +18,35 @@ OUTPUTS_DIR="$CLAUDE_DIR/task-outputs"
 # Read input JSON from stdin
 INPUT=$(cat)
 
-# Extract agent info
-AGENT_NAME=$(echo "$INPUT" | jq -r '.agent_name // ""')
-AGENT_ID=$(echo "$INPUT" | jq -r '.agent_id // ""')
-TRANSCRIPT_PATH=$(echo "$INPUT" | jq -r '.agent_transcript_path // ""')
+# Diagnostic log — dump ALL keys
+DEBUG_LOG="/tmp/kernel-hooks.log"
+{
+    echo "=== $(date -u +%FT%TZ) task-completion-capture.sh ==="
+    echo "FULL_INPUT: $INPUT"
+    echo "KEYS: $(echo "$INPUT" | jq -r 'keys | join(",")' 2>/dev/null || echo "?")"
+} >> "$DEBUG_LOG" 2>/dev/null || true
+
+# Extract IDs and agent type from hook input. Claude Code SubagentStop input
+# (empirically) contains: agent_id, agent_transcript_path, agent_type, cwd,
+# hook_event_name, last_assistant_message, session_id, transcript_path, etc.
+# The agent_type field is plugin-namespaced (e.g. "claudikins-kernel:babyclaude").
+AGENT_ID=$(echo "$INPUT" | jq -r '.agent_id // .agentId // ""')
+TRANSCRIPT_PATH=$(echo "$INPUT" | jq -r '.agent_transcript_path // .transcript_path // ""')
+RAW_AGENT=$(echo "$INPUT" | jq -r '.agent_type // .subagent_type // .agent_name // .agentType // ""')
+
+# Fallback: derive from <transcript>.meta.json if the field is missing.
+if [ -z "$RAW_AGENT" ] && [ -n "$TRANSCRIPT_PATH" ]; then
+    META_PATH="${TRANSCRIPT_PATH%.jsonl}.meta.json"
+    if [ -f "$META_PATH" ]; then
+        RAW_AGENT=$(jq -r '.agentType // .agent_type // ""' "$META_PATH" 2>/dev/null || echo "")
+    fi
+fi
+
+AGENT_NAME="${RAW_AGENT##*:}"  # strip plugin namespace prefix
+
+{
+    echo "  -> agent_id=$AGENT_ID agent_type=$RAW_AGENT (resolved=$AGENT_NAME)"
+} >> "$DEBUG_LOG" 2>/dev/null || true
 
 # Only act on babyclaude completions
 if [ "$AGENT_NAME" != "babyclaude" ]; then

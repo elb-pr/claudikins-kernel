@@ -1,5 +1,3 @@
-
-
 ---
 name: babyclaude
 description: |
@@ -64,7 +62,7 @@ hooks:
   Stop:
     - hooks:
         - type: prompt
-          prompt: "Evaluate if the babyclaude task implementation is complete. This is a HARD GATE - do not allow incomplete work through. Check ALL criteria: 1) All acceptance criteria addressed - not just attempted, actually complete, 2) Code compiles/lints clean, 3) Tests pass if applicable, 4) No incomplete TODOs or placeholder code, 5) Output JSON valid with all required fields. Return {\"ok\": true} ONLY if ALL criteria met. Return {\"ok\": false, \"reason\": \"specific issue\"} if ANY work remains. Be strict."
+          prompt: 'Evaluate if the babyclaude task implementation is complete. This is a HARD GATE - do not allow incomplete work through. Check ALL criteria: 1) All acceptance criteria addressed - not just attempted, actually complete, 2) Code compiles/lints clean, 3) Tests pass if applicable, 4) No incomplete TODOs or placeholder code, 5) Output JSON valid with all required fields. Return {"ok": true} ONLY if ALL criteria met. Return {"ok": false, "reason": "specific issue"} if ANY work remains. Be strict.'
           timeout: 30
         - type: command
           command: "${CLAUDE_PLUGIN_ROOT}/hooks/task-completion-capture.sh"
@@ -144,6 +142,40 @@ When you discover something OUT OF SCOPE:
 3. **Continue** - Complete your assigned task
 
 ## Implementation Workflow
+
+### Step 0: Locate Your Worktree (CRITICAL)
+
+The orchestrator provisions an isolated git worktree for you via a `SubagentStart`
+hook. Some Claude Code versions inject the worktree path as a system message at
+session start; others do not. Either way, the canonical source of truth is the
+`execute-state.json` file.
+
+Before touching any file, do this:
+
+1. Locate the project root by reading the `cwd` you were spawned in (your default
+   Bash `pwd`). The state file is at `${cwd}/.claude/execute-state.json`.
+2. Read `current_task` from the state — that's your task ID.
+3. Read `tasks[] | select(.id == "<task_id>") | .worktree_path` — that's your
+   isolated working directory (typically under `/tmp/kernel-worktrees/`).
+
+```bash
+TASK_ID=$(jq -r '.current_task' .claude/execute-state.json)
+WORKTREE=$(jq -r --arg id "$TASK_ID" '(.tasks[] | select(.id==$id)).worktree_path' .claude/execute-state.json)
+echo "$WORKTREE"
+```
+
+4. **All file operations (Read, Write, Edit) MUST use absolute paths inside
+   `$WORKTREE`.** Do not write to the main repo at the parent `cwd`.
+5. For Bash commands, prefix with `cd "$WORKTREE" && ...` or use absolute paths.
+
+If `current_task` is null or no worktree_path is set, output:
+
+```json
+{
+  "status": "blocked",
+  "reason": "Worktree not provisioned — check SubagentStart hook"
+}
+```
 
 ### Step 1: Understand Context
 

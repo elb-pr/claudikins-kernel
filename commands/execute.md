@@ -62,17 +62,17 @@ You are orchestrating a task execution workflow with isolated agents and human c
 
 ## Flags
 
-| Flag            | Effect                                              |
-| --------------- | --------------------------------------------------- |
-| `--resume`      | Resume from last checkpoint                         |
-| `--status`      | Show current execution status                       |
-| `--abort`       | Abort current execution (saves checkpoint)          |
-| `--batch N`     | Override batch size (default: from plan)            |
-| `--model M`     | Model for agents: `opus` or `sonnet` (default: opus)|
-| `--skip-review` | Skip code review (spec review still runs)           |
-| `--dry-run`     | Parse plan and show execution order without running |
-| `--timing`      | Show task and batch durations                       |
-| `--trace`       | Show execution trace at completion                  |
+| Flag            | Effect                                               |
+| --------------- | ---------------------------------------------------- |
+| `--resume`      | Resume from last checkpoint                          |
+| `--status`      | Show current execution status                        |
+| `--abort`       | Abort current execution (saves checkpoint)           |
+| `--batch N`     | Override batch size (default: from plan)             |
+| `--model M`     | Model for agents: `opus` or `sonnet` (default: opus) |
+| `--skip-review` | Skip code review (spec review still runs)            |
+| `--dry-run`     | Parse plan and show execution order without running  |
+| `--timing`      | Show task and batch durations                        |
+| `--trace`       | Show execution trace at completion                   |
 
 ## Merge Strategy
 
@@ -151,6 +151,34 @@ AskUserQuestion({
 ```
 
 Store the selected model in `execute-state.json` as `"model": "opus"|"sonnet"`. All `Task()` calls for babyclaude, spec-reviewer, and code-reviewer must use this value.
+
+### Pre-flight: gitignore ephemeral state
+
+The `create-task-branch.sh` hook refuses to create a worktree if the working
+tree is dirty (`git diff-index --quiet HEAD --`). The orchestrator writes to
+`.claude/execute-state.json`, `.claude/traces/`, and `.claude/checkpoints/`
+between every spawn, so if those paths are tracked, the hook will block from
+the second task onwards.
+
+If `.claude/.gitignore` is missing, create one with:
+
+```
+execute-state.json
+execute-trace.json
+checkpoints/
+traces/
+task-outputs/
+agent-outputs/
+reviews/
+errors/
+evidence/
+verification/
+tmp/
+SCOPE_NOTES.md
+```
+
+and commit it (along with `git rm --cached` of any of those paths that are
+already tracked) BEFORE Phase 1.
 
 ### Plan Loading
 
@@ -275,115 +303,187 @@ Tasks in this batch:
 
 For each task in batch:
 
-### 2.1 Branch Creation (via create-task-branch.sh hook)
+### 2.1 Write `current_task` to state (orchestrator, BEFORE spawn)
+
+**CRITICAL — do this before every babyclaude spawn.**
+
+The `SubagentStart` hook (`create-task-branch.sh`) needs to know which task it's
+provisioning a worktree for. The Claude Code hook stdin JSON does NOT contain
+the spawn prompt, so the hook cannot extract `TASK_ID` from there. Instead the
+hook reads `current_task` from `execute-state.json`.
+
+Therefore the orchestrator MUST write the current task ID into state immediately
+before calling `Task(babyclaude, ...)`:
+
+```typescript
+// MANDATORY: set current_task in state before spawning
+const stateFile = `${projectDir}/.claude/execute-state.json`;
+const state = JSON.parse(readFileSync(stateFile, "utf8"));
+state.current_task = task.id; // string ID, e.g. "1" or "auth-mw"
+state.status = "executing"; // hook bails if not "executing"
+writeFileSync(stateFile, JSON.stringify(state, null, 2));
+```
+
+Skipping this step is the single most common cause of "the worktree wasn't
+created" failures. The hook silently exits 0 if `current_task` is null.
+
+### 2.2 Branch + worktree creation (via create-task-branch.sh hook)
 
 ```
-Creating branch: execute/task-${id}-${slug}-${uuid}
+Branch: execute/task-${id}-${slug}-${uuid}
+Worktree: /tmp/kernel-worktrees/task-${id}-${uuid}
 ```
 
-The hook:
+When you call `Task(babyclaude, ...)`, the SubagentStart hook fires
+**synchronously** before the agent starts running. The hook:
 
-1. Verifies clean working directory
-2. Creates branch with UUID suffix
-3. Updates state with branch name
-4. Passes branch info to agent via additionalContext
+1. Reads `agent_type` from stdin; verifies it ends in `:babyclaude`.
+2. `cd`s to the project root (from hook input `cwd` field).
+3. Verifies a git repository with a clean working tree (`git diff-index --quiet HEAD`).
+4. Reads `current_task` from state (this is why step 2.1 is mandatory).
+5. Creates `execute/task-<id>-<slug>-<uuid>` branch (no checkout).
+6. Creates worktree at `/tmp/kernel-worktrees/task-<id>-<uuid>`.
+7. Updates `execute-state.json` with `tasks[i].branch` and `tasks[i].worktree_path`.
 
-### 2.2 Agent Spawning
+If the working tree is dirty, the hook exits 2 and the agent spawn is blocked.
+Ensure ephemeral state files (`execute-state.json`, `traces/`, `checkpoints/`,
+`task-outputs/`, etc.) are in `.claude/.gitignore` so editing them mid-batch
+doesn't trip this guard.
+
+> **Hooks ABI note:** The `systemMessage` JSON output from `create-task-branch.sh`
+> is NOT propagated to the spawned subagent on current Claude Code versions.
+> The agent learns its worktree path by reading state itself — see
+> `agents/babyclaude.md` Step 0. The orchestrator does NOT need to inject the
+> worktree path into the spawn prompt.
+
+### 2.3 Agent Spawning
+
+The flow is:
+
+1. Orchestrator writes `current_task` to state (step 2.1).
+2. Orchestrator calls `Task(babyclaude, ...)`.
+3. SubagentStart hook fires synchronously, creates the worktree, writes
+   `worktree_path` back to state (step 2.2).
+4. Babyclaude starts running; its system prompt's "Step 0" instructs it to read
+   `execute-state.json` and locate its own `worktree_path`. The orchestrator
+   does **not** know the worktree path before spawn and does **not** need to
+   inject it into the prompt — the hook generates a UUID that the orchestrator
+   couldn't predict anyway.
 
 **Test Task Detection:**
 
 Before spawning babyclaude, check if this is a test task:
 
 ```typescript
-const isTestTask = task.name.toLowerCase().includes('test') ||
-                   task.type === 'Test' ||
-                   task.files.some(f => f.includes('.test.') || f.includes('.spec.'));
+const isTestTask =
+  task.name.toLowerCase().includes("test") ||
+  task.type === "Test" ||
+  task.files.some((f) => f.includes(".test.") || f.includes(".spec."));
 ```
 
 **Implementation Source Injection (for test tasks):**
 
-If `isTestTask` is true, the orchestrator MUST:
-
-1. Identify dependency tasks from `task.deps`
-2. Read the implementation files from those completed dependencies
-3. Inject them into the prompt as `## Implementation Sources to Test`
+If `isTestTask` is true, the orchestrator MUST inject dependency implementation
+files into the prompt. Test tasks run against a worktree branched off `master`,
+so the dependency's output is NOT in the worktree (its branch hasn't been merged
+yet). The orchestrator needs to either inline the source contents or include a
+`cp` command for the test to access them.
 
 ```typescript
-let implementationSources = '';
+let implementationSources = "";
 
 if (isTestTask && task.deps.length > 0) {
-  // Gather implementation files from completed dependency tasks
-  const depTasks = task.deps.map(depId =>
-    state.tasks.find(t => t.id === depId)
-  ).filter(t => t && t.status === 'complete');
+  const depTasks = task.deps
+    .map((depId) => state.tasks.find((t) => t.id === depId))
+    .filter((t) => t && t.status === "completed");
 
-  const implFiles = depTasks.flatMap(t => t.files_changed || t.files);
+  // Read each dependency's output files from the dependency's worktree
+  const sources = depTasks.flatMap((dep) =>
+    (dep.files || []).map((f) => ({
+      file: f,
+      contents: readFileSync(`${dep.worktree_path}/${f}`, "utf8"),
+    })),
+  );
 
-  // Read each implementation file
   implementationSources = `
-## Implementation Sources to Test
+## Implementation Sources to Test (from dependency tasks)
 
-The following implementation files are from your dependency tasks.
-You MUST read these to understand the actual interfaces - do NOT assume or hallucinate.
+The following files are produced by your dependency tasks. They are NOT yet in
+your worktree (deps aren't merged). Copy them in from the dependency worktrees
+before running tests, e.g.:
 
-${implFiles.map(f => `- ${f}`).join('\n')}
+${depTasks.map((d) => `cp ${d.worktree_path}/*.{py,ts,js} <your-worktree>/`).join("\n")}
 
-Read these files FIRST before writing any tests.
+File contents follow so you can write the test without assuming an interface:
+
+${sources.map((s) => `### ${s.file}\n\`\`\`\n${s.contents}\n\`\`\``).join("\n\n")}
 `;
 }
 ```
 
 **Spawning babyclaude:**
 
-**CRITICAL: Worktree Isolation**
-
-The SubagentStart hook (create-task-branch.sh) creates a worktree for each task and returns the path in `additionalContext`. You MUST:
-
-1. Parse the worktree path from the hook output
-2. Pass it to babyclaude so it operates in isolation
-3. Verify babyclaude's commits go to the correct branch
-
 ```typescript
-// Get worktree path from SubagentStart hook output (stored in state)
-const worktreePath = state.tasks.find(t => t.id === task.id)?.worktree_path;
+// Step 2.1 — write current_task FIRST (mandatory)
+state.current_task = task.id;
+state.status = "executing";
+writeFileSync(stateFile, JSON.stringify(state, null, 2));
 
-if (!worktreePath) {
-  // Hook didn't create worktree - this is a bug, abort
-  throw new Error(`No worktree for task ${task.id}. Check create-task-branch.sh hook.`);
-}
-
+// Step 2.3 — call Agent. The SubagentStart hook will provision the worktree
+// synchronously before babyclaude starts. The agent reads its worktree path
+// from execute-state.json (per agents/babyclaude.md Step 0).
 Task(babyclaude, {
   prompt: `
     TASK_ID: ${task.id}
     TASK_SLUG: ${task.slug}
 
-    WORKTREE: ${worktreePath}
-    **IMPORTANT: All your file operations MUST be in the worktree directory above.**
-    Use absolute paths or cd to the worktree first.
+    Step 0 of your system prompt applies: locate your worktree by reading
+    \`current_task\` and \`tasks[].worktree_path\` from
+    ${projectDir}/.claude/execute-state.json. ALL file operations MUST happen
+    inside that worktree, not the main repo.
 
     Implement: ${task.name}
 
-    Files to modify: ${task.files.join(", ")}
+    Files to create/modify: ${task.files.join(", ")}
 
     Acceptance criteria:
     ${task.criteria.map((c) => `- ${c}`).join("\n")}
     ${implementationSources}
+
     Requirements:
-    - Work ONLY in ${worktreePath} (your isolated worktree)
     - Implement EXACTLY what is specified
     - Do NOT add features beyond the spec
-    - Commit your changes when complete
+    - Do NOT run git operations — the orchestrator owns git
     - Output JSON with status and files_changed
   `,
-  context: "fork",
-  model: "opus",
-  cwd: worktreePath, // CRITICAL: Run babyclaude in its isolated worktree
+  // NOTE: do NOT set cwd here — the hook can't communicate the worktree path
+  // back to the Agent tool before it starts the subagent. The subagent reads
+  // its worktree path from state and uses absolute paths / cd internally.
+  subagent_type: "claudikins-kernel:babyclaude",
+  model: state.model || "opus",
 });
+
+// Step 2.6 — after Agent returns, the worktree_path is in state. Read it for
+// the review phase (which needs the diff from the task branch).
+const completed = JSON.parse(readFileSync(stateFile, "utf8"));
+const worktreePath = completed.tasks.find(
+  (t) => t.id === task.id,
+)?.worktree_path;
+if (!worktreePath) {
+  throw new Error(
+    `No worktree for task ${task.id} after Agent returned. Check /tmp/kernel-hooks.log.`,
+  );
+}
 ```
 
-**Why worktree isolation matters:** Without this, parallel babyclaude agents share the same working directory. Their commits collide on whichever branch is checked out. Each agent MUST operate in its own worktree.
+**Why this flow:** The original design assumed the SubagentStart hook could pass
+the worktree path to the spawned subagent via a `systemMessage` JSON response.
+Empirically that does not propagate to the subagent's context on current Claude
+Code versions. The state-file-as-side-channel pattern works reliably and has the
+side benefit of letting the orchestrator inspect `worktree_path`, `branch`, and
+`stuck_score` at any time without parsing hook outputs.
 
-### 2.3 Branch Guard (via git-branch-guard.sh hook)
+### 2.4 Branch Guard (via git-branch-guard.sh hook)
 
 During execution, PreToolUse hook blocks:
 
@@ -392,15 +492,17 @@ During execution, PreToolUse hook blocks:
 - Direct pushes to protected branches
 - Rebasing, merging, stashing
 
-### 2.4 Progress Tracking (via execute-tracker.sh hook)
+### 2.5 Progress Tracking (via execute-tracker.sh hook)
 
-PostToolUse hook:
+PostToolUse hook (fires on every tool call inside the subagent):
 
 - Records tool calls for tracing
-- Updates stuck score
-- Warns if agent appears stuck (score >= 60)
+- Updates `tasks[i].tool_calls`, `last_tool`, `last_activity`, `stuck_score`
+- Warns if `stuck_score >= 60`
 
-### 2.5 Completion Capture (via task-completion-capture.sh hook)
+**Atomicity note:** The hook updates state via `jq ... > state.tmp && mv state.tmp state`. Earlier versions of the hook ran `mv` unconditionally even when `jq` failed, which silently truncated `execute-state.json` to 0 bytes. The current hook validates the `.tmp` is non-empty and parses as JSON before swapping it in. If you see state vanish mid-batch, check `/tmp/kernel-hooks.log` for `execute-tracker: WARNING` lines.
+
+### 2.6 Completion Capture (via task-completion-capture.sh hook)
 
 On SubagentStop:
 
@@ -417,15 +519,16 @@ After task completes, two-stage review:
 
 **You MUST spawn the reviewer agents. Inline reviews are VIOLATIONS.**
 
-| ✅ CORRECT | ❌ VIOLATION |
-|-----------|-------------|
-| `Task(spec-reviewer, {...})` | Creating your own compliance table |
-| `Task(code-reviewer, {...})` | "Let me verify the implementation" |
-| Reading `.claude/reviews/spec/*.json` | Writing "Verdict: PASS" yourself |
+| ✅ CORRECT                            | ❌ VIOLATION                       |
+| ------------------------------------- | ---------------------------------- |
+| `Task(spec-reviewer, {...})`          | Creating your own compliance table |
+| `Task(code-reviewer, {...})`          | "Let me verify the implementation" |
+| Reading `.claude/reviews/spec/*.json` | Writing "Verdict: PASS" yourself   |
 
 **The orchestrator does NOT review. The orchestrator SPAWNS reviewers.**
 
 Before proceeding to Phase 4 (Batch Review), verify:
+
 ```
 □ .claude/reviews/spec/{task_id}.json EXISTS
 □ .claude/reviews/code/{task_id}.json EXISTS
@@ -533,7 +636,10 @@ Results:
 
 ## Phase 5: Merge Decision
 
-For approved tasks:
+After each batch's reviews pass and the human accepts, merge the task branches
+into the base (master/main) BEFORE starting the next batch. Tasks in later
+batches depend on outputs from earlier batches — if you don't merge, the next
+batch's worktrees won't see those files.
 
 ```
 Ready to merge approved tasks.
@@ -545,6 +651,24 @@ Branches:
 Conflict check: None detected
 
 [Merge all] [Merge task 1 only] [Keep separate] [Squash merge]
+```
+
+### Between-batch state cleanup (orchestrator)
+
+After merging and before starting the next batch, the orchestrator must:
+
+```typescript
+// 1. Clear current_task so the SubagentStart hook doesn't try to provision
+//    a worktree on an unrelated subagent spawn (e.g. spec-reviewer).
+state.current_task = null;
+// 2. Advance current_batch.
+state.current_batch = nextBatch.id;
+// 3. (Optional) Remove the merged tasks' worktrees to free disk.
+//    `git worktree remove <path>` is BLOCKED by git-branch-guard.sh while
+//    status === "executing"; cleanup must happen after Phase 6 sets status
+//    to "completed", or via direct `rm -rf` of the worktree path + a follow-up
+//    `git worktree prune`.
+writeFileSync(stateFile, JSON.stringify(state, null, 2));
 ```
 
 ### Conflict Handling
