@@ -44,15 +44,19 @@ VERIFICATION_OUTPUT=""
 if [ -n "$TRANSCRIPT_PATH" ] && [ -f "$TRANSCRIPT_PATH" ]; then
     # Extract the last JSON block that looks like catastrophiser output
     # Look for status field (PASS/FAIL) and evidence field
+    # -oE (POSIX ERE) rather than -oP: PCRE is a GNU extension unavailable in
+    # BSD grep (macOS default). \s is spelled [[:space:]] for portability.
     VERIFICATION_OUTPUT=$(tail -100 "$TRANSCRIPT_PATH" | \
-        grep -oP '\{[^{}]*"status"\s*:\s*"(PASS|FAIL)"[^{}]*\}' | \
+        grep -oE '\{[^{}]*"status"[[:space:]]*:[[:space:]]*"(PASS|FAIL)"[^{}]*\}' | \
         tail -1 || echo "")
 
-    # If simple extraction failed, try multiline JSON extraction
+    # If simple extraction failed, try multiline JSON extraction.
+    # Flattening newlines to spaces gives the same reach as PCRE's (?s)
+    # DOTALL flag without needing `grep -Pzo`.
     if [ -z "$VERIFICATION_OUTPUT" ]; then
-        VERIFICATION_OUTPUT=$(tail -200 "$TRANSCRIPT_PATH" | \
-            grep -Pzo '(?s)\{[^{}]*"verified_at"[^{}]*"status"[^{}]*\}' | \
-            tr '\0' '\n' | tail -1 || echo "")
+        VERIFICATION_OUTPUT=$(tail -200 "$TRANSCRIPT_PATH" | tr '\n' ' ' | \
+            grep -oE '\{[^{}]*"verified_at"[^{}]*"status"[^{}]*\}' | \
+            tail -1 || echo "")
     fi
 fi
 

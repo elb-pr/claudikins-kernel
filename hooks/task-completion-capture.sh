@@ -51,8 +51,10 @@ fi
 TASK_OUTPUT=""
 if [ -n "$TRANSCRIPT_PATH" ] && [ -f "$TRANSCRIPT_PATH" ]; then
     # Extract the last assistant message that looks like JSON output
+    # -oE (POSIX ERE) rather than -oP: PCRE is a GNU extension unavailable in
+    # BSD grep (macOS default), and this pattern needs no PCRE features.
     TASK_OUTPUT=$(tail -50 "$TRANSCRIPT_PATH" | \
-        grep -oP '\{[^{}]*"status"[^{}]*\}' | \
+        grep -oE '\{[^{}]*"status"[^{}]*\}' | \
         tail -1 || echo "")
 fi
 

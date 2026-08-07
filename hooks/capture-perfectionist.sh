@@ -44,15 +44,19 @@ AGENT_OUTPUT=""
 if [ -n "$TRANSCRIPT_PATH" ] && [ -f "$TRANSCRIPT_PATH" ]; then
     # Extract the last JSON block that looks like perfectionist output
     # Look for files_updated field
+    # -oE (POSIX ERE) rather than -oP: PCRE is a GNU extension unavailable in
+    # BSD grep (macOS default), and this pattern needs no PCRE features.
     AGENT_OUTPUT=$(tail -100 "$TRANSCRIPT_PATH" | \
-        grep -oP '\{[^{}]*"files_updated"[^{}]*\}' | \
+        grep -oE '\{[^{}]*"files_updated"[^{}]*\}' | \
         tail -1 || echo "")
 
-    # If simple extraction failed, try multiline JSON extraction
+    # If simple extraction failed, try multiline JSON extraction.
+    # Flattening newlines to spaces gives the same reach as PCRE's (?s)
+    # DOTALL flag without needing `grep -Pzo`.
     if [ -z "$AGENT_OUTPUT" ]; then
-        AGENT_OUTPUT=$(tail -200 "$TRANSCRIPT_PATH" | \
-            grep -Pzo '(?s)\{[^{}]*"sections_approved"[^{}]*\}' | \
-            tr '\0' '\n' | tail -1 || echo "")
+        AGENT_OUTPUT=$(tail -200 "$TRANSCRIPT_PATH" | tr '\n' ' ' | \
+            grep -oE '\{[^{}]*"sections_approved"[^{}]*\}' | \
+            tail -1 || echo "")
     fi
 fi
 

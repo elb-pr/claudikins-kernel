@@ -1,0 +1,24 @@
+name: hook portability
+
+# The hooks in hooks/ run on contributors' machines under whatever grep/sed/awk
+# the host provides. macOS ships BSD grep, which rejects GNU-only flags such as
+# -P. Running the suite on both runners keeps that difference visible.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    name: hooks (${{ matrix.os }})
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run hook portability tests
+        run: bash tests/test-hook-portability.sh

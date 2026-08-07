@@ -30,8 +30,11 @@ fi
 # Extract task info from prompt (passed by execute command)
 # Format expected: TASK_ID: <id> TASK_SLUG: <slug>
 PROMPT=$(echo "$INPUT" | jq -r '.prompt // ""')
-TASK_ID=$(echo "$PROMPT" | grep -oP 'TASK_ID:\s*\K[^\s]+' || echo "")
-TASK_SLUG=$(echo "$PROMPT" | grep -oP 'TASK_SLUG:\s*\K[^\s]+' || echo "unknown")
+# `sed -nE` is used instead of `grep -oP ... \K` because -P (PCRE) is a GNU
+# extension that BSD grep (macOS default) does not support.
+TASK_ID=$(printf '%s\n' "$PROMPT" | sed -nE 's/.*TASK_ID:[[:space:]]*([^[:space:]]+).*/\1/p' | head -1)
+TASK_SLUG=$(printf '%s\n' "$PROMPT" | sed -nE 's/.*TASK_SLUG:[[:space:]]*([^[:space:]]+).*/\1/p' | head -1)
+TASK_SLUG="${TASK_SLUG:-unknown}"
 
 # If no task ID, this isn't a task execution - allow spawn
 if [ -z "$TASK_ID" ]; then

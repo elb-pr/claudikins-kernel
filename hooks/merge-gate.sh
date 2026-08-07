@@ -26,7 +26,16 @@ fi
 
 # Extract branch name being merged (if present)
 # Patterns: "git merge branch-name", "git merge origin/branch"
-MERGE_BRANCH=$(echo "$COMMAND" | grep -oP 'git\s+merge\s+\K[^\s;|&]+' || echo "")
+# POSIX awk is used instead of `grep -oP ... \K` because -P (PCRE) is a GNU
+# extension that BSD grep (macOS default) does not support.
+MERGE_BRANCH=$(printf '%s\n' "$COMMAND" | awk '{
+    while (match($0, /git[ \t]+merge[ \t]+[^ \t;|&]+/)) {
+        m = substr($0, RSTART, RLENGTH)
+        sub(/^git[ \t]+merge[ \t]+/, "", m)
+        print m
+        $0 = substr($0, RSTART + RLENGTH)
+    }
+}')
 
 if [ -z "$MERGE_BRANCH" ]; then
     echo "Cannot determine branch being merged. Merge blocked for safety." >&2
@@ -35,7 +44,16 @@ fi
 
 # Extract task ID from branch name
 # Format: execute/task-{id}-{slug}-{uuid}
-TASK_ID=$(echo "$MERGE_BRANCH" | grep -oP 'task-\K[^-]+' || echo "")
+# Shell parameter expansion avoids the non-portable `grep -oP ... \K`.
+case "$MERGE_BRANCH" in
+    *task-*)
+        TASK_ID="${MERGE_BRANCH#*task-}"   # strip through the first "task-"
+        TASK_ID="${TASK_ID%%-*}"           # keep up to the next "-"
+        ;;
+    *)
+        TASK_ID=""
+        ;;
+esac
 
 if [ -z "$TASK_ID" ]; then
     # Not a task branch - might be a regular merge, allow it
